@@ -62,6 +62,7 @@ if __name__ == "__main__":
         data_extractor = DataExtract()
         file_path = "Data/TelecoCustomerChurn.csv"
         json_data = data_extractor.csv_to_json(file_path)
-        data_extractor.push_data_to_mongo(json_data, "telecom", "telecom_churn")
+        data_extractor.push_data_to_mongo(json_data, "TelecomCustomerChurn", "TelecomCustomerChurn")
+        logging.info("Data pushed to MongoDB successfully.")
     except Exception as e:
         logging.error(f"Error: {e}")
