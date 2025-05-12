@@ -1,2 +1,0 @@
-[2025-05-11 18:12:30] INFO push_data.py:48 Inserted 7043 documents into TelecomCustomerChurn.
-[2025-05-11 18:12:30] INFO push_data.py:66 Data pushed to MongoDB successfully.

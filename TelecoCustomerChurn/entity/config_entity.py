@@ -4,7 +4,7 @@ import sys
 from TelecoCustomerChurn.constants import training_pipeline
 
 class TrainingPipelineConfig:
-    def __intit__(self):
+    def __init__(self):
         timestamp = datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
         self.artifact_dir = os.path.join(training_pipeline.ARTIFACT_DIR, timestamp)
         self.pipeline_name = training_pipeline.PIPELINE_NAME

@@ -1,7 +1,8 @@
 from TelecoCustomerChurn.exception.exception import CustomerChurnException
-from TelecoCustomerChurn.logging import logging
+from TelecoCustomerChurn.logging.logger import logging
 
 from TelecoCustomerChurn.entity.config_entity import DataIngestionConfig
+from TelecoCustomerChurn.entity.artifact_entity import DataIngestionArtifact
 
 import os
 import sys
@@ -14,7 +15,7 @@ import numpy as np
 from dotenv import find_dotenv, load_dotenv
 load_dotenv(find_dotenv())
 
-MONGO_CLIENT = pymongo.MongoClient(os.getenv("MONGO_DB_URL"))
+MONGO_CLIENT = pymongo.MongoClient(os.getenv("MONGO_URI"))
 
 class DataIngestion:
     def __init__(self, data_ingestion_config: DataIngestionConfig):
@@ -23,7 +24,7 @@ class DataIngestion:
         except Exception as e:
             raise CustomerChurnException(e, sys) from e
 
-    def initiate_data_ingestion(self) -> List[str]:
+    def initiate_data_ingestion(self) -> DataIngestionArtifact:
         try:
             logging.info("Exporting data from MongoDB to DataFrame")
             # Export data from MongoDB to DataFrame
@@ -44,7 +45,13 @@ class DataIngestion:
             df.replace({'na':np.nan}, inplace=True)
             if df.isnull().values.any():
                 df.dropna(inplace=True)
-            
+
+            # Save the cleaned DataFrame to feature_store before splitting
+            feature_store_dir = os.path.join(self.data_ingestion_config.data_ingestion_dir, "feature_store")
+            os.makedirs(feature_store_dir, exist_ok=True)
+            feature_store_file = os.path.join(feature_store_dir, "cleaned_data.csv")
+            df.to_csv(feature_store_file, index=False)
+            logging.info(f"Feature store file saved at: {feature_store_file}")
 
             # Split the data into train and test sets
             train_set, test_set = train_test_split(df, test_size=self.data_ingestion_config.train_test_split_ratio, random_state=42)
@@ -57,6 +64,9 @@ class DataIngestion:
             logging.info(f"Train file saved at: {self.data_ingestion_config.train_file_path}")
             logging.info(f"Test file saved at: {self.data_ingestion_config.test_file_path}")
             logging.info("Data ingestion completed successfully")
-            return [self.data_ingestion_config.train_file_path, self.data_ingestion_config.test_file_path]
+            return DataIngestionArtifact(
+                train_file_path=self.data_ingestion_config.train_file_path,
+                test_file_path=self.data_ingestion_config.test_file_path
+            )
         except Exception as e:
             raise CustomerChurnException(e, sys) from e
