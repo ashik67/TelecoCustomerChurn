@@ -1,9 +1,0 @@
-[2025-05-12 17:12:58] INFO data_ingestion.py:29 Exporting data from MongoDB to DataFrame
-[2025-05-12 17:13:01] INFO data_ingestion.py:32 DataFrame shape: (7043, 22)
-[2025-05-12 17:13:01] INFO data_ingestion.py:37 DataFrame shape after dropping '_id': (7043, 21)
-[2025-05-12 17:13:01] INFO data_ingestion.py:54 Feature store file saved at: artifacts\2025-05-12-17-12-58\data_ingestion\feature_store\cleaned_data.csv
-[2025-05-12 17:13:01] INFO data_ingestion.py:58 Train set shape: (5634, 21), Test set shape: (1409, 21)
-[2025-05-12 17:13:01] INFO data_ingestion.py:64 Train file saved at: artifacts\2025-05-12-17-12-58\data_ingestion\ingested\train.csv
-[2025-05-12 17:13:01] INFO data_ingestion.py:65 Test file saved at: artifacts\2025-05-12-17-12-58\data_ingestion\ingested\test.csv
-[2025-05-12 17:13:01] INFO data_ingestion.py:66 Data ingestion completed successfully
-[2025-05-12 17:13:01] INFO main.py:22 Data ingestion artifact: DataIngestionArtifact(train_file_path='artifacts\\2025-05-12-17-12-58\\data_ingestion\\ingested\\train.csv', test_file_path='artifacts\\2025-05-12-17-12-58\\data_ingestion\\ingested\\test.csv')
