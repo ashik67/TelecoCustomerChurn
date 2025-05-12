@@ -41,3 +41,24 @@ def save_yaml_file(file_path: str, content: dict) -> None:
             yaml.dump(content, file)
     except Exception as e:
         raise CustomerChurnException(e, sys) from e
+
+def convert_numpy_types(obj):
+    import numpy as np
+    import math
+    if isinstance(obj, dict):
+        return {k: convert_numpy_types(v) for k, v in obj.items()}
+    elif isinstance(obj, list):
+        return [convert_numpy_types(i) for i in obj]
+    elif isinstance(obj, (np.generic, np.bool_)):
+        v = obj.item()
+        if isinstance(v, float) and math.isnan(v):
+            return None
+        return v
+    elif isinstance(obj, float) and math.isnan(obj):
+        return None
+    elif isinstance(obj, str) and obj.strip().lower() in {'.nan', 'nan'}:
+        return None
+    elif isinstance(obj, (np.ndarray,)):
+        return obj.tolist()
+    else:
+        return obj
