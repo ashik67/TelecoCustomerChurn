@@ -48,3 +48,17 @@ class DataTransformationConfig:
         self.target_column_name = training_pipeline.TARGET_COLUMN_NAME
         self.numeric_imputer_params = training_pipeline.DATA_TRANSFORMATION_NUMERIC_IMPUTER_PARAMS
         self.categorical_imputer_params = training_pipeline.DATA_TRANSFORMATION_CATEGORICAL_IMPUTER_PARAMS
+
+
+class ModelTrainingConfig:
+    def __init__(self, training_pipeline_config: TrainingPipelineConfig):
+        self.model_training_dir = os.path.join(training_pipeline_config.artifact_dir, training_pipeline.MODEL_TRAINING_DIR)
+        self.model_file_path = os.path.join(self.model_training_dir, training_pipeline.MODEL_TRAINING_MODEL_FILE_NAME)
+        self.metrics_file_path = os.path.join(self.model_training_dir, training_pipeline.MODEL_TRAINING_METRICS_FILE_NAME)
+        self.report_file_path = os.path.join(self.model_training_dir, training_pipeline.MODEL_TRAINING_REPORT_FILE_NAME)
+        self.model_dir = os.path.join(self.model_training_dir, training_pipeline.MODEL_TRAINING_MODEL_DIR)
+        self.metrics_dir = os.path.join(self.model_training_dir, training_pipeline.MODEL_TRAINING_METRICS_DIR)
+        self.report_dir = os.path.join(self.model_training_dir, training_pipeline.MODEL_TRAINING_REPORT_DIR)
+        self.expected_score = training_pipeline.MODEL_TRAINING_EXPECTED_SCORE
+        self.fitting_thresholds = training_pipeline.MODEL_TRAINING_FITTING_THRESHOLDS
+        self.training_timestamp = training_pipeline_config.timestamp

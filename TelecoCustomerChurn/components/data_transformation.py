@@ -66,7 +66,7 @@ class DataTransformation:
             ])
             categorical_transformer = Pipeline(steps=[
                 ('imputer', SimpleImputer(**self.data_transformation_config.categorical_imputer_params)),
-                ('onehot', OneHotEncoder(handle_unknown='ignore'))
+                ('onehot', OneHotEncoder(handle_unknown='ignore', sparse_output=False))
             ])
             # Combine the preprocessing steps using ColumnTransformer
             logging.info("Creating ColumnTransformer for preprocessing.")
@@ -88,6 +88,11 @@ class DataTransformation:
             # Transform the test data
             logging.info("Transforming test data.")
             X_test_transformed = preprocessor.transform(X_test)
+            # Ensure dense arrays for saving
+            if hasattr(X_train_transformed, 'toarray'):
+                X_train_transformed = X_train_transformed.toarray()
+            if hasattr(X_test_transformed, 'toarray'):
+                X_test_transformed = X_test_transformed.toarray()
             # Encode the target variable ('Churn') to numeric: 0 for 'No', 1 for 'Yes'
             logging.info("Encoding target variable to numeric: 0 for 'No', 1 for 'Yes'.")
             y_train_encoded = y_train.map({'No': 0, 'Yes': 1}).astype(np.int8)

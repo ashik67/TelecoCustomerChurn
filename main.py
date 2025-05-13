@@ -1,10 +1,12 @@
 from TelecoCustomerChurn.components.data_ingestion import DataIngestion
 from TelecoCustomerChurn.components.data_validation import DataValidation
 from TelecoCustomerChurn.components.data_transformation import DataTransformation
+from TelecoCustomerChurn.components.model_trainer import ModelTrainer
 from TelecoCustomerChurn.entity.artifact_entity import DataIngestionArtifact, DataValidationArtifact
 from TelecoCustomerChurn.entity.config_entity import DataIngestionConfig
 from TelecoCustomerChurn.entity.config_entity import DataValidationConfig
 from TelecoCustomerChurn.entity.config_entity import DataTransformationConfig
+from TelecoCustomerChurn.entity.config_entity import ModelTrainingConfig
 from TelecoCustomerChurn.logging.logger import logging
 from TelecoCustomerChurn.exception.exception import CustomerChurnException
 from TelecoCustomerChurn.entity.config_entity import TrainingPipelineConfig
@@ -43,6 +45,12 @@ if __name__ == "__main__":
         data_transformation_artifact = data_transformation.initiate_data_transformation()
         logging.info(f"Data transformation artifact: {data_transformation_artifact}")
         
+        Model_Training_Config = ModelTrainingConfig(training_pipeline_config=training_pipeline_config)
+        # Initialize the model training component
+        Model_Trainer = ModelTrainer(model_training_config=Model_Training_Config, data_transformation_artifact=data_transformation_artifact) 
+        # Start the model training process
+        model_trainer_artifact = Model_Trainer.initiate_model_training()
+        logging.info(f"Model training artifact: {model_trainer_artifact}")
 
 
         

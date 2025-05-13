@@ -5,7 +5,6 @@ import os
 import sys
 import numpy as np
 import pandas as pd
-import dill
 import pickle
 
 def read_yaml_file(file_path: str) -> dict:
@@ -121,5 +120,73 @@ def save_numpy_array_data(file_path: str, array: np.ndarray) -> None:
     try:
         os.makedirs(os.path.dirname(file_path), exist_ok=True)
         np.save(file_path, array)
+    except Exception as e:
+        raise CustomerChurnException(e, sys) from e
+    
+
+    
+def load_numpy_array_data(file_path: str) -> np.ndarray:
+    """
+    Loads a NumPy array from a file.
+
+    Args:
+        file_path (str): Path to the file from which the array will be loaded.
+
+    Returns:
+        np.ndarray: The loaded NumPy array.
+    """
+    try:
+        # Allow loading of object arrays (e.g., if categorical or mixed types slipped through)
+        return np.load(file_path, allow_pickle=True)
+    except Exception as e:
+        raise CustomerChurnException(e, sys) from e
+    
+def evaluate_models(X_train, y_train, X_test, y_test, models, param_grids):
+    """
+    Evaluates multiple models with their parameter grids and returns a report containing all metrics and best params for each model.
+
+    Args:
+        X_train (numpy.ndarray): Feature data for training.
+        y_train (numpy.ndarray): Target data for training.
+        X_test (numpy.ndarray): Feature data for testing.
+        y_test (numpy.ndarray): Target data for testing.
+        models (dict): Dictionary of model names and their corresponding model objects.
+        param_grids (dict): Dictionary of model names and their corresponding param grids.
+
+    Returns:
+        dict: A report containing model names, their metrics, best params, and the best model overall.
+    """
+    from sklearn.model_selection import GridSearchCV
+    from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, roc_auc_score
+    try:
+        report = {}
+        best_model_name = None
+        best_score = -float('inf')
+        best_model_metrics = None
+        best_model_params = None
+        for model_name, model in models.items():
+            param_grid = param_grids.get(model_name, {})
+            grid = GridSearchCV(model, param_grid, scoring='accuracy', cv=3, n_jobs=-1)
+            grid.fit(X_train, y_train)
+            best_estimator = grid.best_estimator_
+            y_pred = best_estimator.predict(X_test)
+            metrics = {
+                'accuracy': accuracy_score(y_test, y_pred),
+                'precision': precision_score(y_test, y_pred, zero_division=0),
+                'recall': recall_score(y_test, y_pred, zero_division=0),
+                'f1_score': f1_score(y_test, y_pred, zero_division=0),
+                'roc_auc': roc_auc_score(y_test, y_pred),
+                'best_params': grid.best_params_
+            }
+            report[model_name] = metrics
+            if metrics['accuracy'] > best_score:
+                best_score = metrics['accuracy']
+                best_model_name = model_name
+                best_model_metrics = metrics
+                best_model_params = grid.best_params_
+        report['best_model'] = best_model_name
+        report['best_model_metrics'] = best_model_metrics
+        report['best_model_params'] = best_model_params
+        return report
     except Exception as e:
         raise CustomerChurnException(e, sys) from e
