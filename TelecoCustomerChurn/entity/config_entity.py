@@ -34,3 +34,17 @@ class DataValidationConfig:
         self.invalid_test_file_path = os.path.join(self.invalid_dir, training_pipeline.TEST_FILE_NAME)
         self.drift_report_dir = os.path.join(self.data_validation_dir, training_pipeline.DATA_VALIDATION_DRIFT_REPORT_DIR)
         self.drift_report_file_path = os.path.join(self.drift_report_dir, training_pipeline.DATA_VALIDATION_DRIFT_REPORT_FILE_NAME)
+
+class DataTransformationConfig:
+    def __init__(self, training_pipeline_config: TrainingPipelineConfig):
+        self.data_transformation_dir = os.path.join(training_pipeline_config.artifact_dir, training_pipeline.DATA_TRANSFORMATION_DIR)
+        self.transformed_dir = os.path.join(self.data_transformation_dir, training_pipeline.DATA_TRANSFORMATION_TRANSFORMED_DIR)
+        self.preprocessed_object_dir = os.path.join(self.data_transformation_dir, training_pipeline.DATA_TRANSFORMATION_PREPROCESSED_OBJECT_DIR)
+        self.transformed_train_file_path = os.path.join(self.transformed_dir, training_pipeline.TRANSFORMED_TRAIN_FILE_NAME)
+        self.transformed_test_file_path = os.path.join(self.transformed_dir, training_pipeline.TRANSFORMED_TEST_FILE_NAME)
+        self.transformed_train_target_file_path = os.path.join(self.transformed_dir, training_pipeline.TRANSFORMED_TRAIN_TARGET_FILE_NAME)
+        self.transformed_test_target_file_path = os.path.join(self.transformed_dir, training_pipeline.TRANSFORMED_TEST_TARGET_FILE_NAME)
+        self.preprocessed_object_file_path = os.path.join(self.preprocessed_object_dir, "preprocessed_object.pkl")
+        self.target_column_name = training_pipeline.TARGET_COLUMN_NAME
+        self.numeric_imputer_params = training_pipeline.DATA_TRANSFORMATION_NUMERIC_IMPUTER_PARAMS
+        self.categorical_imputer_params = training_pipeline.DATA_TRANSFORMATION_CATEGORICAL_IMPUTER_PARAMS

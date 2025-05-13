@@ -21,11 +21,13 @@ class DataIngestion:
     def __init__(self, data_ingestion_config: DataIngestionConfig):
         try:
             self.data_ingestion_config = data_ingestion_config
+            logging.info("Initializing Data Ingestion component.")
         except Exception as e:
             raise CustomerChurnException(e, sys) from e
 
     def initiate_data_ingestion(self) -> DataIngestionArtifact:
         try:
+            logging.info("Starting data ingestion process.")
             logging.info("Exporting data from MongoDB to DataFrame")
             # Export data from MongoDB to DataFrame
             df = pd.DataFrame(list(MONGO_CLIENT[self.data_ingestion_config.database_name][self.data_ingestion_config.collection_name].find()))
@@ -69,4 +71,5 @@ class DataIngestion:
                 test_file_path=self.data_ingestion_config.test_file_path
             )
         except Exception as e:
+            logging.error(f"Exception during data ingestion: {e}")
             raise CustomerChurnException(e, sys) from e

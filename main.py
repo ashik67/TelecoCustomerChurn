@@ -1,7 +1,10 @@
 from TelecoCustomerChurn.components.data_ingestion import DataIngestion
 from TelecoCustomerChurn.components.data_validation import DataValidation
+from TelecoCustomerChurn.components.data_transformation import DataTransformation
+from TelecoCustomerChurn.entity.artifact_entity import DataIngestionArtifact, DataValidationArtifact
 from TelecoCustomerChurn.entity.config_entity import DataIngestionConfig
 from TelecoCustomerChurn.entity.config_entity import DataValidationConfig
+from TelecoCustomerChurn.entity.config_entity import DataTransformationConfig
 from TelecoCustomerChurn.logging.logger import logging
 from TelecoCustomerChurn.exception.exception import CustomerChurnException
 from TelecoCustomerChurn.entity.config_entity import TrainingPipelineConfig
@@ -31,6 +34,15 @@ if __name__ == "__main__":
         # Start the data validation process
         data_validation_artifact = data_validation.initiate_data_validation()
         logging.info(f"Data validation artifact: {data_validation_artifact}")
+
+        # Initialize the data transformation config
+        data_transformation_config = DataTransformationConfig(training_pipeline_config=training_pipeline_config)
+        # Initialize the data transformation component
+        data_transformation = DataTransformation(data_transformation_config=data_transformation_config, data_validation_artifact=data_validation_artifact)
+        # Start the data transformation process
+        data_transformation_artifact = data_transformation.initiate_data_transformation()
+        logging.info(f"Data transformation artifact: {data_transformation_artifact}")
+        
 
 
         

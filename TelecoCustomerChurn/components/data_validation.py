@@ -14,6 +14,7 @@ from scipy.stats import ks_2samp
 class DataValidation:
     def __init__(self, data_validation_config: DataValidationConfig, data_ingestion_artifact: DataIngestionArtifact):
         try:
+            logging.info("Initializing Data Validation component.")
             self.data_validation_config = data_validation_config
             self.data_ingestion_artifact = data_ingestion_artifact
             self.schema = read_yaml_file(SCHEMA_FILE_PATH)
@@ -114,6 +115,7 @@ class DataValidation:
 
     def initiate_data_validation(self) -> DataValidationArtifact:
         try:
+            logging.info("Starting data validation process.")
             # Load the schema
             schema = self.schema
             logging.info(f"Schema loaded: {schema}")
