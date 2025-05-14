@@ -9,11 +9,12 @@ from sklearn.metrics import (
     roc_auc_score,
     roc_curve,
     classification_report,
+    confusion_matrix,  # <-- add this import
 )
 
 def evaluate_classification_model(y_true, y_pred, y_proba) -> ClassificationMetricArtifact:
     """
-    Evaluates the classification model using various metrics.
+    Evaluates the classification model using various metrics, including confusion matrix.
 
     Args:
         y_true (array-like): True labels.
@@ -29,6 +30,7 @@ def evaluate_classification_model(y_true, y_pred, y_proba) -> ClassificationMetr
         recall = recall_score(y_true, y_pred)
         f1 = f1_score(y_true, y_pred)
         roc_auc = roc_auc_score(y_true, y_proba)
+        cm = confusion_matrix(y_true, y_pred)
 
         # Create and return the ClassificationMetricArtifact
         metric_artifact = ClassificationMetricArtifact(
@@ -36,10 +38,12 @@ def evaluate_classification_model(y_true, y_pred, y_proba) -> ClassificationMetr
             precision=precision,
             recall=recall,
             f1_score=f1,
-            roc_auc=roc_auc
+            roc_auc=roc_auc,
+            confusion_matrix=cm.tolist()  # ensure it's serializable
         )
         
         return metric_artifact
 
     except Exception as e:
-        raise CustomerChurnException(e) from e
+        import sys
+        raise CustomerChurnException(e, sys) from e

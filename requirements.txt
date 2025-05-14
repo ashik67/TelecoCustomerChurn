@@ -11,5 +11,7 @@ matplotlib
 seaborn
 scipy
 pyyaml
+mlflow
+XGBoost
 
 #-e .

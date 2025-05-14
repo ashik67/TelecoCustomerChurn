@@ -41,6 +41,7 @@ class ClassificationMetricArtifact:
     recall: float                       # Recall of the model
     f1_score: float                     # F1 score of the model
     roc_auc: float                      # ROC AUC score of the model
+    confusion_matrix: list              # Confusion matrix as a list of lists
 
 @dataclass
 class ModelTrainingArtifact:

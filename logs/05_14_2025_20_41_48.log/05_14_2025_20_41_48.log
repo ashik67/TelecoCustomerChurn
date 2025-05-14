@@ -1,0 +1,112 @@
+[2025-05-14 20:41:53] INFO data_ingestion.py:24 Initializing Data Ingestion component.
+[2025-05-14 20:41:53] INFO data_ingestion.py:30 Starting data ingestion process.
+[2025-05-14 20:41:53] INFO data_ingestion.py:31 Exporting data from MongoDB to DataFrame
+[2025-05-14 20:41:55] INFO data_ingestion.py:34 DataFrame shape: (7043, 22)
+[2025-05-14 20:41:55] INFO data_ingestion.py:39 DataFrame shape after dropping '_id': (7043, 21)
+[2025-05-14 20:41:55] INFO data_ingestion.py:56 Feature store file saved at: artifacts\2025-05-14-20-41-53\data_ingestion\feature_store\cleaned_data.csv
+[2025-05-14 20:41:55] INFO data_ingestion.py:60 Train set shape: (5634, 21), Test set shape: (1409, 21)
+[2025-05-14 20:41:55] INFO data_ingestion.py:66 Train file saved at: artifacts\2025-05-14-20-41-53\data_ingestion\ingested\train.csv
+[2025-05-14 20:41:55] INFO data_ingestion.py:67 Test file saved at: artifacts\2025-05-14-20-41-53\data_ingestion\ingested\test.csv
+[2025-05-14 20:41:55] INFO data_ingestion.py:68 Data ingestion completed successfully
+[2025-05-14 20:41:55] INFO main.py:28 Data ingestion artifact: DataIngestionArtifact(train_file_path='artifacts\\2025-05-14-20-41-53\\data_ingestion\\ingested\\train.csv', test_file_path='artifacts\\2025-05-14-20-41-53\\data_ingestion\\ingested\\test.csv')
+[2025-05-14 20:41:55] INFO data_validation.py:17 Initializing Data Validation component.
+[2025-05-14 20:41:55] INFO data_validation.py:118 Starting data validation process.
+[2025-05-14 20:41:55] INFO data_validation.py:121 Schema loaded: {'columns': {'customerID': {'type': 'string'}, 'gender': {'type': 'string', 'allowed': ['Male', 'Female']}, 'SeniorCitizen': {'type': 'int', 'min': 0, 'max': 1}, 'Partner': {'type': 'string', 'allowed': ['Yes', 'No']}, 'Dependents': {'type': 'string', 'allowed': ['Yes', 'No']}, 'tenure': {'type': 'int', 'min': 0, 'max': 100}, 'PhoneService': {'type': 'string', 'allowed': ['Yes', 'No']}, 'MultipleLines': {'type': 'string', 'allowed': ['Yes', 'No', 'No phone service']}, 'InternetService': {'type': 'string', 'allowed': ['DSL', 'Fiber optic', 'No']}, 'OnlineSecurity': {'type': 'string', 'allowed': ['Yes', 'No', 'No internet service']}, 'OnlineBackup': {'type': 'string', 'allowed': ['Yes', 'No', 'No internet service']}, 'DeviceProtection': {'type': 'string', 'allowed': ['Yes', 'No', 'No internet service']}, 'TechSupport': {'type': 'string', 'allowed': ['Yes', 'No', 'No internet service']}, 'StreamingTV': {'type': 'string', 'allowed': ['Yes', 'No', 'No internet service']}, 'StreamingMovies': {'type': 'string', 'allowed': ['Yes', 'No', 'No internet service']}, 'Contract': {'type': 'string', 'allowed': ['Month-to-month', 'One year', 'Two year']}, 'PaperlessBilling': {'type': 'string', 'allowed': ['Yes', 'No']}, 'PaymentMethod': {'type': 'string', 'allowed': ['Electronic check', 'Mailed check', 'Bank transfer (automatic)', 'Credit card (automatic)']}, 'MonthlyCharges': {'type': 'float', 'min': 0, 'max': 200}, 'TotalCharges': {'type': 'float', 'min': 0, 'max': 10000}, 'Churn': {'type': 'string', 'allowed': ['Yes', 'No']}}}
+[2025-05-14 20:41:55] INFO data_validation.py:126 Loaded train data from artifacts\2025-05-14-20-41-53\data_ingestion\ingested\train.csv with shape (5634, 21)
+[2025-05-14 20:41:55] INFO data_validation.py:127 Loaded test data from artifacts\2025-05-14-20-41-53\data_ingestion\ingested\test.csv with shape (1409, 21)
+[2025-05-14 20:41:55] INFO data_validation.py:65 Schema validation passed.
+[2025-05-14 20:41:55] INFO data_validation.py:65 Schema validation passed.
+[2025-05-14 20:41:55] INFO data_validation.py:140 Both train and test data passed schema validation.
+[2025-05-14 20:41:55] INFO data_validation.py:93 Column 'customerID': missing in train=0/5634, missing in test=0/1409
+[2025-05-14 20:41:55] INFO data_validation.py:100 No significant drift in column 'customerID': KS=0.02950692502909311, p-value=0.2739968159910041
+[2025-05-14 20:41:55] INFO data_validation.py:93 Column 'gender': missing in train=0/5634, missing in test=0/1409
+[2025-05-14 20:41:55] INFO data_validation.py:100 No significant drift in column 'gender': KS=0.03832946223035494, p-value=0.07068401665247188
+[2025-05-14 20:41:55] INFO data_validation.py:93 Column 'SeniorCitizen': missing in train=0/5634, missing in test=0/1409
+[2025-05-14 20:41:55] INFO data_validation.py:100 No significant drift in column 'SeniorCitizen': KS=0.006685305403948903, p-value=0.9999999991591447
+[2025-05-14 20:41:55] INFO data_validation.py:93 Column 'Partner': missing in train=0/5634, missing in test=0/1409
+[2025-05-14 20:41:55] INFO data_validation.py:100 No significant drift in column 'Partner': KS=0.007624044726922847, p-value=0.99999985458709
+[2025-05-14 20:41:55] INFO data_validation.py:93 Column 'Dependents': missing in train=0/5634, missing in test=0/1409
+[2025-05-14 20:41:55] INFO data_validation.py:100 No significant drift in column 'Dependents': KS=0.004329765065745765, p-value=1.0
+[2025-05-14 20:41:55] INFO data_validation.py:93 Column 'tenure': missing in train=0/5634, missing in test=0/1409
+[2025-05-14 20:41:55] INFO data_validation.py:100 No significant drift in column 'tenure': KS=0.026218188112174058, p-value=0.4117871539367753
+[2025-05-14 20:41:55] INFO data_validation.py:93 Column 'PhoneService': missing in train=0/5634, missing in test=0/1409
+[2025-05-14 20:41:55] INFO data_validation.py:100 No significant drift in column 'PhoneService': KS=0.005712553786664309, p-value=0.9999999999997722
+[2025-05-14 20:41:55] INFO data_validation.py:93 Column 'MultipleLines': missing in train=0/5634, missing in test=0/1409
+[2025-05-14 20:41:55] INFO data_validation.py:100 No significant drift in column 'MultipleLines': KS=0.023784041582675195, p-value=0.5371312596574944
+[2025-05-14 20:41:55] INFO data_validation.py:93 Column 'InternetService': missing in train=0/5634, missing in test=0/1409
+[2025-05-14 20:41:55] INFO data_validation.py:100 No significant drift in column 'InternetService': KS=0.005956182591096891, p-value=0.999999999997373
+[2025-05-14 20:41:55] INFO data_validation.py:93 Column 'OnlineSecurity': missing in train=0/5634, missing in test=0/1409
+[2025-05-14 20:41:55] INFO data_validation.py:100 No significant drift in column 'OnlineSecurity': KS=0.01046797641713484, p-value=0.999554982946144
+[2025-05-14 20:41:55] INFO data_validation.py:93 Column 'OnlineBackup': missing in train=0/5634, missing in test=0/1409
+[2025-05-14 20:41:55] INFO data_validation.py:100 No significant drift in column 'OnlineBackup': KS=0.025674243346124476, p-value=0.43825600147078875
+[2025-05-14 20:41:55] INFO data_validation.py:93 Column 'DeviceProtection': missing in train=0/5634, missing in test=0/1409
+[2025-05-14 20:41:55] INFO data_validation.py:100 No significant drift in column 'DeviceProtection': KS=0.01168977361164964, p-value=0.9973494374628205
+[2025-05-14 20:41:55] INFO data_validation.py:93 Column 'TechSupport': missing in train=0/5634, missing in test=0/1409
+[2025-05-14 20:41:55] INFO data_validation.py:100 No significant drift in column 'TechSupport': KS=0.011353933698197071, p-value=0.9982836103150267
+[2025-05-14 20:41:55] INFO data_validation.py:93 Column 'StreamingTV': missing in train=0/5634, missing in test=0/1409
+[2025-05-14 20:41:55] INFO data_validation.py:100 No significant drift in column 'StreamingTV': KS=0.013799543630593228, p-value=0.9802940829768169
+[2025-05-14 20:41:55] INFO data_validation.py:93 Column 'StreamingMovies': missing in train=0/5634, missing in test=0/1409
+[2025-05-14 20:41:55] INFO data_validation.py:100 No significant drift in column 'StreamingMovies': KS=0.010251935362532006, p-value=0.9996961508823948
+[2025-05-14 20:41:55] INFO data_validation.py:93 Column 'Contract': missing in train=0/5634, missing in test=0/1409
+[2025-05-14 20:41:55] INFO data_validation.py:100 No significant drift in column 'Contract': KS=0.014997280276169752, p-value=0.9576498121421186
+[2025-05-14 20:41:55] INFO data_validation.py:93 Column 'PaperlessBilling': missing in train=0/5634, missing in test=0/1409
+[2025-05-14 20:41:55] INFO data_validation.py:100 No significant drift in column 'PaperlessBilling': KS=0.010258989764314956, p-value=0.9996919807808146
+[2025-05-14 20:41:55] INFO data_validation.py:93 Column 'PaymentMethod': missing in train=0/5634, missing in test=0/1409
+[2025-05-14 20:41:55] INFO data_validation.py:100 No significant drift in column 'PaymentMethod': KS=0.010978538746175822, p-value=0.9989870934761655
+[2025-05-14 20:41:55] INFO data_validation.py:93 Column 'MonthlyCharges': missing in train=0/5634, missing in test=0/1409
+[2025-05-14 20:41:55] INFO data_validation.py:100 No significant drift in column 'MonthlyCharges': KS=0.02462616079551481, p-value=0.4915757154856136
+[2025-05-14 20:41:55] INFO data_validation.py:93 Column 'TotalCharges': missing in train=10/5634, missing in test=1/1409
+[2025-05-14 20:41:55] INFO data_validation.py:100 No significant drift in column 'TotalCharges': KS=0.023174591657212508, p-value=0.5702970129914692
+[2025-05-14 20:41:55] INFO data_validation.py:93 Column 'Churn': missing in train=0/5634, missing in test=0/1409
+[2025-05-14 20:41:55] INFO data_validation.py:100 No significant drift in column 'Churn': KS=0.0008039498603354419, p-value=1.0
+[2025-05-14 20:41:55] INFO data_validation.py:110 No overall data drift detected.
+[2025-05-14 20:41:55] INFO data_validation.py:152 Drift report saved at artifacts\2025-05-14-20-41-53\data_validation\drift_report\drift_report.yaml
+[2025-05-14 20:41:55] INFO data_validation.py:162 Valid train data saved at artifacts\2025-05-14-20-41-53\data_validation\valid\train.csv
+[2025-05-14 20:41:55] INFO data_validation.py:163 Valid test data saved at artifacts\2025-05-14-20-41-53\data_validation\valid\test.csv
+[2025-05-14 20:41:55] INFO data_validation.py:181 Data validation artifact created: DataValidationArtifact(validation_status=True, valid_train_file_path='artifacts\\2025-05-14-20-41-53\\data_validation\\valid\\train.csv', valid_test_file_path='artifacts\\2025-05-14-20-41-53\\data_validation\\valid\\test.csv', invalid_train_file_path='artifacts\\2025-05-14-20-41-53\\data_validation\\invalid\\train.csv', invalid_test_file_path='artifacts\\2025-05-14-20-41-53\\data_validation\\invalid\\test.csv', drift_report_file_path='artifacts\\2025-05-14-20-41-53\\data_validation\\drift_report\\drift_report.yaml')
+[2025-05-14 20:41:55] INFO main.py:38 Data validation artifact: DataValidationArtifact(validation_status=True, valid_train_file_path='artifacts\\2025-05-14-20-41-53\\data_validation\\valid\\train.csv', valid_test_file_path='artifacts\\2025-05-14-20-41-53\\data_validation\\valid\\test.csv', invalid_train_file_path='artifacts\\2025-05-14-20-41-53\\data_validation\\invalid\\train.csv', invalid_test_file_path='artifacts\\2025-05-14-20-41-53\\data_validation\\invalid\\test.csv', drift_report_file_path='artifacts\\2025-05-14-20-41-53\\data_validation\\drift_report\\drift_report.yaml')
+[2025-05-14 20:41:55] INFO data_transformation.py:21 Data Transformation component initialized.
+[2025-05-14 20:41:55] INFO data_transformation.py:27 Starting data transformation process.
+[2025-05-14 20:41:55] INFO data_transformation.py:29 Loading validated train data from: artifacts\2025-05-14-20-41-53\data_validation\valid\train.csv
+[2025-05-14 20:41:55] INFO data_transformation.py:31 Loading validated test data from: artifacts\2025-05-14-20-41-53\data_validation\valid\test.csv
+[2025-05-14 20:41:55] INFO data_transformation.py:33 Train data shape: (5634, 21), Test data shape: (1409, 21)
+[2025-05-14 20:41:55] INFO data_transformation.py:39 Separating features and target column: Churn
+[2025-05-14 20:41:55] INFO data_transformation.py:51 Categorical columns: ['customerID', 'gender', 'Partner', 'Dependents', 'PhoneService', 'MultipleLines', 'InternetService', 'OnlineSecurity', 'OnlineBackup', 'DeviceProtection', 'TechSupport', 'StreamingTV', 'StreamingMovies', 'Contract', 'PaperlessBilling', 'PaymentMethod']
+[2025-05-14 20:41:55] INFO data_transformation.py:52 Numerical columns: ['SeniorCitizen', 'tenure', 'MonthlyCharges', 'TotalCharges']
+[2025-05-14 20:41:55] INFO data_transformation.py:61 Numeric imputer params: {'missing_values': nan, 'n_neighbors': 5, 'weights': 'uniform'}
+[2025-05-14 20:41:55] INFO data_transformation.py:62 Categorical imputer params: {'missing_values': nan, 'strategy': 'most_frequent', 'fill_value': None, 'add_indicator': False}
+[2025-05-14 20:41:55] INFO data_transformation.py:72 Creating ColumnTransformer for preprocessing.
+[2025-05-14 20:41:55] INFO data_transformation.py:86 Fitting and transforming training data.
+[2025-05-14 20:41:56] INFO data_transformation.py:89 Transforming test data.
+[2025-05-14 20:41:56] INFO data_transformation.py:97 Encoding target variable to numeric: 0 for 'No', 1 for 'Yes'.
+[2025-05-14 20:41:56] INFO data_transformation.py:101 Saving encoded train target to: artifacts\2025-05-14-20-41-53\data_transformation\transformed\train_target.npy
+[2025-05-14 20:41:56] INFO data_transformation.py:103 Saving encoded test target to: artifacts\2025-05-14-20-41-53\data_transformation\transformed\test_target.npy
+[2025-05-14 20:41:56] INFO data_transformation.py:106 Saving transformed train data to: artifacts\2025-05-14-20-41-53\data_transformation\transformed\train.npy
+[2025-05-14 20:41:58] INFO data_transformation.py:108 Saving transformed test data to: artifacts\2025-05-14-20-41-53\data_transformation\transformed\test.npy
+[2025-05-14 20:41:59] INFO data_transformation.py:111 Saving preprocessor object to: artifacts\2025-05-14-20-41-53\data_transformation\preprocessed_object\preprocessed_object.pkl
+[2025-05-14 20:41:59] INFO data_transformation.py:121 Data transformation process completed successfully.
+[2025-05-14 20:41:59] INFO main.py:46 Data transformation artifact: DataTransformationArtifact(transformed_train_file_path='artifacts\\2025-05-14-20-41-53\\data_transformation\\transformed\\train.npy', transformed_test_file_path='artifacts\\2025-05-14-20-41-53\\data_transformation\\transformed\\test.npy', transformed_train_target_file_path='artifacts\\2025-05-14-20-41-53\\data_transformation\\transformed\\train_target.npy', transformed_test_target_file_path='artifacts\\2025-05-14-20-41-53\\data_transformation\\transformed\\test_target.npy', preprocessed_object_file_path='artifacts\\2025-05-14-20-41-53\\data_transformation\\preprocessed_object\\preprocessed_object.pkl')
+[2025-05-14 20:41:59] INFO model_trainer.py:27 Initializing ModelTrainer with provided config and data transformation artifact.
+[2025-05-14 20:41:59] INFO model_trainer.py:30 ModelTrainingConfig: <TelecoCustomerChurn.entity.config_entity.ModelTrainingConfig object at 0x0000018B3D8B0C20>
+[2025-05-14 20:41:59] INFO model_trainer.py:31 DataTransformationArtifact: DataTransformationArtifact(transformed_train_file_path='artifacts\\2025-05-14-20-41-53\\data_transformation\\transformed\\train.npy', transformed_test_file_path='artifacts\\2025-05-14-20-41-53\\data_transformation\\transformed\\test.npy', transformed_train_target_file_path='artifacts\\2025-05-14-20-41-53\\data_transformation\\transformed\\train_target.npy', transformed_test_target_file_path='artifacts\\2025-05-14-20-41-53\\data_transformation\\transformed\\test_target.npy', preprocessed_object_file_path='artifacts\\2025-05-14-20-41-53\\data_transformation\\preprocessed_object\\preprocessed_object.pkl')
+[2025-05-14 20:41:59] INFO model_trainer.py:99 Starting model training process.
+[2025-05-14 20:42:00] INFO model_trainer.py:104 Loading preprocessed train data from: artifacts\2025-05-14-20-41-53\data_transformation\transformed\train.npy
+[2025-05-14 20:42:00] INFO model_trainer.py:107 Loading preprocessed test data from: artifacts\2025-05-14-20-41-53\data_transformation\transformed\test.npy
+[2025-05-14 20:42:00] INFO model_trainer.py:118 Train data shape: (5634, 5679), Train target shape: (5634,)
+[2025-05-14 20:42:00] INFO model_trainer.py:119 Test data shape: (1409, 5679), Test target shape: (1409,)
+[2025-05-14 20:42:00] INFO model_trainer.py:121 Training the model.
+[2025-05-14 20:42:00] INFO model_trainer.py:41 Setting up models and hyperparameter grids for training.
+[2025-05-14 20:42:00] INFO model_trainer.py:82 Beginning model evaluation and hyperparameter tuning.
+[2025-05-14 22:12:15] INFO model_trainer.py:86 Best model selected: GradientBoostingClassifier with params: {'learning_rate': 0.1, 'max_depth': 3, 'n_estimators': 200, 'subsample': 0.8}
+[2025-05-14 22:12:15] INFO model_trainer.py:89 Fitting the best model: GradientBoostingClassifier on the training data.
+[2025-05-14 22:15:28] INFO model_trainer.py:91 Model GradientBoostingClassifier training complete.
+[2025-05-14 22:15:28] INFO model_trainer.py:124 Ensuring all output directories exist for model, metrics, and report.
+[2025-05-14 22:15:28] INFO model_trainer.py:130 Generating predictions and probabilities for train and test sets.
+[2025-05-14 22:15:28] INFO model_trainer.py:135 Evaluating classification metrics for train and test sets.
+[2025-05-14 22:15:28] INFO model_trainer.py:139 Loading preprocessor object from: artifacts\2025-05-14-20-41-53\data_transformation\preprocessed_object\preprocessed_object.pkl
+[2025-05-14 22:15:28] INFO model_trainer.py:144 Saving trained model to: artifacts\2025-05-14-20-41-53\model_training\model\model.pkl
+[2025-05-14 22:15:28] INFO model_trainer.py:148 Saving model report to metrics file: artifacts\2025-05-14-20-41-53\model_training\metrics\metrics.yaml
+[2025-05-14 22:15:28] INFO model_trainer.py:159 Saving summary report to: artifacts\2025-05-14-20-41-53\model_training\report\report.yaml
+[2025-05-14 22:15:29] INFO model_trainer.py:219 Creating metric artifacts for train and test sets.
+[2025-05-14 22:15:29] INFO model_trainer.py:236 Model training pipeline completed successfully. ModelTrainerArtifact: ModelTrainingArtifact(model_file_path='artifacts\\2025-05-14-20-41-53\\model_training\\model\\model.pkl', metrics_file_path='artifacts\\2025-05-14-20-41-53\\model_training\\metrics\\metrics.yaml', report_file_path='artifacts\\2025-05-14-20-41-53\\model_training\\report\\report.yaml', model_dir='artifacts\\2025-05-14-20-41-53\\model_training\\model', metrics_dir='artifacts\\2025-05-14-20-41-53\\model_training\\metrics', report_dir='artifacts\\2025-05-14-20-41-53\\model_training\\report', expected_score=0.7, fitting_thresholds={'overfitting': 0.05, 'underfitting': 0.05}, training_timestamp='2025-05-14-20-41-53', train_metric_artifact=ClassificationMetricArtifact(accuracy=0.8154064607738729, precision=0.6993006993006993, recall=0.5347593582887701, f1_score=0.6060606060606061, roc_auc=np.float64(0.9053541036125333), confusion_matrix=[[3794, 344], [696, 800]]), test_metric_artifact=ClassificationMetricArtifact(accuracy=0.8161816891412349, precision=0.6925675675675675, recall=0.5495978552278821, f1_score=0.6128550074738416, roc_auc=np.float64(0.8628437897874895), confusion_matrix=[[945, 91], [168, 205]]))
+[2025-05-14 22:15:29] INFO main.py:53 Model training artifact: ModelTrainingArtifact(model_file_path='artifacts\\2025-05-14-20-41-53\\model_training\\model\\model.pkl', metrics_file_path='artifacts\\2025-05-14-20-41-53\\model_training\\metrics\\metrics.yaml', report_file_path='artifacts\\2025-05-14-20-41-53\\model_training\\report\\report.yaml', model_dir='artifacts\\2025-05-14-20-41-53\\model_training\\model', metrics_dir='artifacts\\2025-05-14-20-41-53\\model_training\\metrics', report_dir='artifacts\\2025-05-14-20-41-53\\model_training\\report', expected_score=0.7, fitting_thresholds={'overfitting': 0.05, 'underfitting': 0.05}, training_timestamp='2025-05-14-20-41-53', train_metric_artifact=ClassificationMetricArtifact(accuracy=0.8154064607738729, precision=0.6993006993006993, recall=0.5347593582887701, f1_score=0.6060606060606061, roc_auc=np.float64(0.9053541036125333), confusion_matrix=[[3794, 344], [696, 800]]), test_metric_artifact=ClassificationMetricArtifact(accuracy=0.8161816891412349, precision=0.6925675675675675, recall=0.5495978552278821, f1_score=0.6128550074738416, roc_auc=np.float64(0.8628437897874895), confusion_matrix=[[945, 91], [168, 205]]))
