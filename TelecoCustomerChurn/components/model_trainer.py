@@ -106,7 +106,7 @@ class ModelTrainer:
             preprocessed_object = load_object(self.data_transformation_artifact.preprocessed_object_file_path)
             from TelecoCustomerChurn.utils.ml_utils.model.estimator import TelecoCustomerChurnModel
             churn_model = TelecoCustomerChurnModel(preprocessed_object=preprocessed_object, model=best_model)
-            model_save_path = os.path.join(self.model_training_config.model_dir, self.model_training_config.model_file_path)
+            model_save_path = os.path.join(self.model_training_config.model_dir, os.path.basename(self.model_training_config.model_file_path))
             logging.info(f"Saving trained model to: {model_save_path}")
             save_object(file_path=model_save_path, obj=churn_model)
             # Save metrics to metrics.yaml in metrics_dir
