@@ -1,6 +1,0 @@
-artifact_location: file:///D:/MLOps%20Project/TelecoCustomerChurn/mlruns/570062575956336154
-creation_time: 1747235519193
-experiment_id: '570062575956336154'
-last_update_time: 1747235519193
-lifecycle_stage: active
-name: TelecoCustomerChurn_Model_Training
