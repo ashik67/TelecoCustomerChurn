@@ -1,7 +1,5 @@
 venv
 .env
-artifacts
-mlruns
-logs
-
-
+artifacts/
+mlruns/
+logs/
