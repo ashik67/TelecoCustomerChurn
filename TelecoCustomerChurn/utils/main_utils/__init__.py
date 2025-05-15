@@ -166,7 +166,8 @@ def evaluate_models(X_train, y_train, X_test, y_test, models, param_grids):
         best_model_params = None
         for model_name, model in models.items():
             param_grid = param_grids.get(model_name, {})
-            grid = GridSearchCV(model, param_grid, scoring='accuracy', cv=3, n_jobs=-1)
+            # Use F1 score for model selection and hyperparameter tuning
+            grid = GridSearchCV(model, param_grid, scoring='f1', cv=3, n_jobs=-1)
             grid.fit(X_train, y_train)
             best_estimator = grid.best_estimator_
             y_pred = best_estimator.predict(X_test)
@@ -179,8 +180,9 @@ def evaluate_models(X_train, y_train, X_test, y_test, models, param_grids):
                 'best_params': grid.best_params_
             }
             report[model_name] = metrics
-            if metrics['accuracy'] > best_score:
-                best_score = metrics['accuracy']
+            # Select best model by F1 score
+            if metrics['f1_score'] > best_score:
+                best_score = metrics['f1_score']
                 best_model_name = model_name
                 best_model_metrics = metrics
                 best_model_params = grid.best_params_

@@ -9,7 +9,7 @@ from TelecoCustomerChurn.utils.main_utils import save_yaml_file, convert_numpy_t
 import os
 import sys
 from sklearn.linear_model import LogisticRegression
-from sklearn.ensemble import RandomForestClassifier,GradientBoostingClassifier,AdaBoostClassifier
+from sklearn.ensemble import RandomForestClassifier,GradientBoostingClassifier,AdaBoostClassifier, StackingClassifier
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.metrics import accuracy_score, classification_report,r2_score
 from sklearn.model_selection import GridSearchCV
@@ -19,6 +19,9 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import numpy as np
 from xgboost import XGBClassifier
+from imblearn.over_sampling import SMOTE
+from imblearn.pipeline import Pipeline as ImbPipeline
+from sklearn.feature_selection import SelectFromModel
 
 
 class ModelTrainer:
@@ -38,48 +41,117 @@ class ModelTrainer:
         Train multiple models, select the best one based on accuracy, and return the best trained model and the model report.
         """
         try:
-            logging.info("Setting up models and hyperparameter grids for training.")
-            models = {
-                # 'LogisticRegression': LogisticRegression(verbose=1),
-                'RandomForestClassifier': RandomForestClassifier(verbose=1),
-                'GradientBoostingClassifier': GradientBoostingClassifier(verbose=1),
-                'AdaBoostClassifier': AdaBoostClassifier(),
-                'DecisionTreeClassifier': DecisionTreeClassifier(),
-                'XGBClassifier': XGBClassifier(use_label_encoder=False, eval_metric='logloss')
+            logging.info("Setting up models and hyperparameter grids for training with class imbalance handling and feature selection.")
+            # Compute class weights for XGBoost
+            from collections import Counter
+            counter = Counter(y_train)
+            if 0 in counter and 1 in counter:
+                scale_pos_weight = counter[0] / counter[1] if counter[1] > 0 else 1.0
+            else:
+                scale_pos_weight = 1.0
+            # Define base estimators with class_weight where applicable
+            base_estimators = {
+                'RandomForestClassifier': RandomForestClassifier(class_weight='balanced', verbose=1, random_state=42),
+                'GradientBoostingClassifier': GradientBoostingClassifier(verbose=1, random_state=42),  # no class_weight
+                'AdaBoostClassifier': AdaBoostClassifier(random_state=42),  # no class_weight
+                'DecisionTreeClassifier': DecisionTreeClassifier(class_weight='balanced', random_state=42),
+                'XGBClassifier': XGBClassifier(eval_metric='logloss', scale_pos_weight=scale_pos_weight, random_state=42)
             }
+            # Optionally add feature selection (using RandomForest as selector)
+            feature_selector = SelectFromModel(RandomForestClassifier(n_estimators=100, class_weight='balanced', random_state=42), threshold='median')
+            # Build pipelines: Only use SMOTE for models that do not natively handle imbalance
+            models = {
+                'RandomForestClassifier': ImbPipeline([
+                    # No SMOTE for RandomForest (has class_weight)
+                    ('feature_selection', feature_selector),
+                    ('clf', base_estimators['RandomForestClassifier'])
+                ]),
+                'GradientBoostingClassifier': ImbPipeline([
+                    # No SMOTE for GradientBoosting (can be sensitive to resampling)
+                    ('feature_selection', feature_selector),
+                    ('clf', base_estimators['GradientBoostingClassifier'])
+                ]),
+                'AdaBoostClassifier': ImbPipeline([
+                    # No SMOTE for AdaBoost (can be sensitive to resampling)
+                    ('feature_selection', feature_selector),
+                    ('clf', base_estimators['AdaBoostClassifier'])
+                ]),
+                'DecisionTreeClassifier': ImbPipeline([
+                    # No SMOTE for DecisionTree (has class_weight)
+                    ('feature_selection', feature_selector),
+                    ('clf', base_estimators['DecisionTreeClassifier'])
+                ]),
+                'XGBClassifier': ImbPipeline([
+                    # No SMOTE for XGBoost (has scale_pos_weight)
+                    ('feature_selection', feature_selector),
+                    ('clf', base_estimators['XGBClassifier'])
+                ]),
+                # Stacking ensemble using the above pipelines as base estimators
+                'StackingClassifier': StackingClassifier(
+                    estimators=[
+                        ('rf', ImbPipeline([
+                            ('feature_selection', feature_selector),
+                            ('clf', base_estimators['RandomForestClassifier'])
+                        ])),
+                        ('gb', ImbPipeline([
+                            ('feature_selection', feature_selector),
+                            ('clf', base_estimators['GradientBoostingClassifier'])
+                        ])),
+                        ('xgb', ImbPipeline([
+                            ('feature_selection', feature_selector),
+                            ('clf', base_estimators['XGBClassifier'])
+                        ])),
+                        ('ada', ImbPipeline([
+                            ('feature_selection', feature_selector),
+                            ('clf', base_estimators['AdaBoostClassifier'])
+                        ])),
+                        ('dt', ImbPipeline([
+                            ('feature_selection', feature_selector),
+                            ('clf', base_estimators['DecisionTreeClassifier'])
+                        ])),
+                    ],
+                    final_estimator=LogisticRegression(max_iter=1000, class_weight='balanced', random_state=42),
+                    passthrough=False, n_jobs=-1
+                )
+            }
+            # Hyperparameter grids (same as before, plus stacking)
             params = {
                 'RandomForestClassifier': {
-                    'n_estimators': [100, 200],
-                    'max_depth': [None, 10, 20],
-                    'min_samples_split': [2, 5],
-                    'min_samples_leaf': [1, 2],
-                    'max_features': ['sqrt', 'log2', None],
+                    'clf__n_estimators': [100],
+                    'clf__max_depth': [None, 10],
+                    'clf__min_samples_split': [2],
+                    'clf__min_samples_leaf': [1],
+                    'clf__max_features': ['sqrt'],
                 },
                 'GradientBoostingClassifier': {
-                    'n_estimators': [100, 200],
-                    'learning_rate': [0.01, 0.1],
-                    'max_depth': [3, 5],
-                    'subsample': [0.8, 1.0],
+                    'clf__n_estimators': [100],
+                    'clf__learning_rate': [0.1],
+                    'clf__max_depth': [3],
+                    'clf__subsample': [1.0],
                 },
                 'AdaBoostClassifier': {
-                    'n_estimators': [50, 100],
-                    'learning_rate': [0.01, 0.1, 1.0],
+                    'clf__n_estimators': [50],
+                    'clf__learning_rate': [1.0],
                 },
                 'DecisionTreeClassifier': {
-                    'max_depth': [None, 10, 20],
-                    'min_samples_split': [2, 5],
-                    'min_samples_leaf': [1, 2],
-                    'criterion': ['gini', 'entropy'],
+                    'clf__max_depth': [None, 10],
+                    'clf__min_samples_split': [2],
+                    'clf__min_samples_leaf': [1],
+                    'clf__criterion': ['gini'],
                 },
                 'XGBClassifier': {
-                    'n_estimators': [100, 200],
-                    'max_depth': [3, 5],
-                    'learning_rate': [0.01, 0.1],
-                    'subsample': [0.8, 1.0],
-                    'colsample_bytree': [0.8, 1.0],
+                    'clf__n_estimators': [100],
+                    'clf__max_depth': [3],
+                    'clf__learning_rate': [0.1],
+                    'clf__subsample': [1.0],
+                    'clf__colsample_bytree': [1.0],
+                },
+                'StackingClassifier': {
+                    # You can tune the final estimator if desired
+                    # 'final_estimator__C': [0.1, 1.0, 10.0],
                 }
             }
-            logging.info("Beginning model evaluation and hyperparameter tuning.")
+            logging.info("Beginning model evaluation and hyperparameter tuning with SMOTE and feature selection.")
             model_report = evaluate_models(X_train, y_train, X_test, y_test, models, params)
             best_model_name = model_report['best_model']
             best_model_params = model_report['best_model_params']
@@ -120,6 +192,11 @@ class ModelTrainer:
                 # model training
                 logging.info("Training the model.")
                 best_model, model_report = self.train_model(X_train, y_train, X_test, y_test)
+                # Robust error handling for model_report
+                if not model_report or 'best_model' not in model_report:
+                    logging.error("Model training did not return a valid model_report. Check evaluate_models for errors.")
+                    raise ValueError("Model training did not return a valid model_report. Check evaluate_models for errors.")
+                best_model_name = model_report['best_model']
                 # Ensure all output directories exist before saving files
                 logging.info("Ensuring all output directories exist for model, metrics, and report.")
                 os.makedirs(self.model_training_config.model_dir, exist_ok=True)
@@ -201,19 +278,88 @@ class ModelTrainer:
                     plt.savefig(cm_test_image_path)
                     plt.close()
                     mlflow.log_artifact(cm_test_image_path, artifact_path="plots")
+                # --- Additional Plots: ROC, PR, Feature Importance ---
+                from sklearn.metrics import roc_curve, auc, precision_recall_curve
+                # ROC Curve (Train)
+                if train_proba is not None:
+                    fpr, tpr, _ = roc_curve(y_train, train_proba)
+                    roc_auc = auc(fpr, tpr)
+                    plt.figure()
+                    plt.plot(fpr, tpr, color='darkorange', lw=2, label=f'ROC curve (area = {roc_auc:.2f})')
+                    plt.plot([0, 1], [0, 1], color='navy', lw=2, linestyle='--')
+                    plt.xlabel('False Positive Rate')
+                    plt.ylabel('True Positive Rate')
+                    plt.title('Train ROC Curve')
+                    plt.legend(loc="lower right")
+                    roc_train_path = os.path.join(self.model_training_config.report_dir, "train_roc_curve.png")
+                    plt.savefig(roc_train_path)
+                    plt.close()
+                    mlflow.log_artifact(roc_train_path, artifact_path="plots")
+                # ROC Curve (Test)
+                if test_proba is not None:
+                    fpr, tpr, _ = roc_curve(y_test, test_proba)
+                    roc_auc = auc(fpr, tpr)
+                    plt.figure()
+                    plt.plot(fpr, tpr, color='darkorange', lw=2, label=f'ROC curve (area = {roc_auc:.2f})')
+                    plt.plot([0, 1], [0, 1], color='navy', lw=2, linestyle='--')
+                    plt.xlabel('False Positive Rate')
+                    plt.ylabel('True Positive Rate')
+                    plt.title('Test ROC Curve')
+                    plt.legend(loc="lower right")
+                    roc_test_path = os.path.join(self.model_training_config.report_dir, "test_roc_curve.png")
+                    plt.savefig(roc_test_path)
+                    plt.close()
+                    mlflow.log_artifact(roc_test_path, artifact_path="plots")
+                # Precision-Recall Curve (Train)
+                if train_proba is not None:
+                    precision, recall, _ = precision_recall_curve(y_train, train_proba)
+                    plt.figure()
+                    plt.plot(recall, precision, color='blue', lw=2)
+                    plt.xlabel('Recall')
+                    plt.ylabel('Precision')
+                    plt.title('Train Precision-Recall Curve')
+                    pr_train_path = os.path.join(self.model_training_config.report_dir, "train_pr_curve.png")
+                    plt.savefig(pr_train_path)
+                    plt.close()
+                    mlflow.log_artifact(pr_train_path, artifact_path="plots")
+                # Precision-Recall Curve (Test)
+                if test_proba is not None:
+                    precision, recall, _ = precision_recall_curve(y_test, test_proba)
+                    plt.figure()
+                    plt.plot(recall, precision, color='blue', lw=2)
+                    plt.xlabel('Recall')
+                    plt.ylabel('Precision')
+                    plt.title('Test Precision-Recall Curve')
+                    pr_test_path = os.path.join(self.model_training_config.report_dir, "test_pr_curve.png")
+                    plt.savefig(pr_test_path)
+                    plt.close()
+                    mlflow.log_artifact(pr_test_path, artifact_path="plots")
+                # Feature Importance (for tree-based models)
+                tree_models = ['RandomForestClassifier', 'GradientBoostingClassifier', 'AdaBoostClassifier', 'DecisionTreeClassifier', 'XGBClassifier']
+                if best_model_name in tree_models and hasattr(best_model, 'feature_importances_'):
+                    importances = best_model.feature_importances_
+                    try:
+                        feature_names = preprocessed_object.get_feature_names_out()
+                    except Exception:
+                        feature_names = [f'feature_{i}' for i in range(len(importances))]
+                    indices = np.argsort(importances)[::-1][:20]  # Top 20 features
+                    plt.figure(figsize=(8,6))
+                    sns.barplot(x=importances[indices], y=np.array(feature_names)[indices], orient='h')
+                    plt.title('Top 20 Feature Importances')
+                    plt.xlabel('Importance')
+                    plt.ylabel('Feature')
+                    fi_path = os.path.join(self.model_training_config.report_dir, "feature_importance.png")
+                    plt.tight_layout()
+                    plt.savefig(fi_path)
+                    plt.close()
+                    mlflow.log_artifact(fi_path, artifact_path="plots")
                 # Log artifacts (model, metrics.yaml, report.yaml)
                 mlflow.log_artifact(model_save_path, artifact_path="model")
                 mlflow.log_artifact(metrics_file_path, artifact_path="metrics")
                 mlflow.log_artifact(report_file_path, artifact_path="report")
                 # Log model to MLflow using the appropriate flavor
-                # Use model_report to get best_model_name
-                best_model_name = model_report['best_model']
-                if best_model_name == 'XGBClassifier':
-                    import mlflow.xgboost
-                    mlflow.xgboost.log_model(best_model, artifact_path="model_mlflow")
-                elif best_model_name in ['RandomForestClassifier', 'AdaBoostClassifier', 'DecisionTreeClassifier']:
-                    import mlflow.sklearn
-                    mlflow.sklearn.log_model(best_model, artifact_path="model_mlflow")
+                import mlflow.sklearn
+                mlflow.sklearn.log_model(best_model, artifact_path="model_mlflow", input_example=X_train[:5])
                 # Prepare ModelTrainerArtifact (update as needed for your artifact_entity.py)
                 from TelecoCustomerChurn.entity.artifact_entity import ModelTrainingArtifact, ClassificationMetricArtifact
                 logging.info("Creating metric artifacts for train and test sets.")
