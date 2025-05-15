@@ -1,5 +1,3 @@
-
-
 python-dotenv
 pandas
 numpy
@@ -12,7 +10,7 @@ seaborn
 scipy
 pyyaml
 mlflow
-XGBoost
+xgboost
 imbalanced-learn
 
 #-e .
