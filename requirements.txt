@@ -12,5 +12,7 @@ pyyaml
 mlflow
 xgboost
 imbalanced-learn
+dagshub
+
 
 #-e .

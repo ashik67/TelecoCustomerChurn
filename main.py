@@ -2,11 +2,13 @@ from TelecoCustomerChurn.components.data_ingestion import DataIngestion
 from TelecoCustomerChurn.components.data_validation import DataValidation
 from TelecoCustomerChurn.components.data_transformation import DataTransformation
 from TelecoCustomerChurn.components.model_trainer import ModelTrainer
-from TelecoCustomerChurn.entity.artifact_entity import DataIngestionArtifact, DataValidationArtifact
+from TelecoCustomerChurn.components.model_pusher import ModelPusher
+from TelecoCustomerChurn.entity.artifact_entity import DataIngestionArtifact, DataValidationArtifact, ModelPusherArtifact
 from TelecoCustomerChurn.entity.config_entity import DataIngestionConfig
 from TelecoCustomerChurn.entity.config_entity import DataValidationConfig
 from TelecoCustomerChurn.entity.config_entity import DataTransformationConfig
 from TelecoCustomerChurn.entity.config_entity import ModelTrainingConfig
+from TelecoCustomerChurn.entity.config_entity import ModelPusherConfig
 from TelecoCustomerChurn.logging.logger import logging
 from TelecoCustomerChurn.exception.exception import CustomerChurnException
 from TelecoCustomerChurn.entity.config_entity import TrainingPipelineConfig
@@ -52,7 +54,17 @@ if __name__ == "__main__":
         model_trainer_artifact = Model_Trainer.initiate_model_training()
         logging.info(f"Model training artifact: {model_trainer_artifact}")
 
-
+        # --- Model Pusher Integration ---
+        model_pusher_config = ModelPusherConfig(
+            artifact_dir=training_pipeline_config.artifact_dir
+        )
+        model_pusher = ModelPusher(
+            model_pusher_config=model_pusher_config,
+            model_training_artifact=model_trainer_artifact,
+            data_transformation_artifact=data_transformation_artifact
+        )
+        model_pusher_artifact = model_pusher.push_model()
+        logging.info(f"Model pusher artifact: {model_pusher_artifact}")
         
     except Exception as e:
         raise CustomerChurnException(e, sys) from e

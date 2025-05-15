@@ -59,3 +59,12 @@ class ModelTrainingArtifact:
     training_timestamp: str             # Timestamp of when the model was trained
     train_metric_artifact: ClassificationMetricArtifact  # Metrics for the training dataset
     test_metric_artifact: ClassificationMetricArtifact   # Metrics for the testing dataset
+
+@dataclass
+class ModelPusherArtifact:
+    """
+    Model Pusher Artifact class to store the paths of the pushed model and preprocessor.
+    """
+    final_model_dir: str                # Directory where the final model is saved
+    pushed_model_path: str              # Path to the pushed model (e.g., model.pkl)
+    pushed_preprocessor_path: str        # Path to the pushed preprocessor object

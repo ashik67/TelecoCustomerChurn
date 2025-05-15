@@ -24,6 +24,9 @@ from imblearn.pipeline import Pipeline as ImbPipeline
 from sklearn.feature_selection import SelectFromModel
 import datetime
 
+import dagshub
+dagshub.init(repo_owner='ashik67', repo_name='TelecoCustomerChurn', mlflow=True)
+
 
 class ModelTrainer:
     def __init__(self, model_training_config: ModelTrainingConfig, data_transformation_artifact: DataTransformationArtifact):

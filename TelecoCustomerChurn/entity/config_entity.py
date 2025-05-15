@@ -62,3 +62,9 @@ class ModelTrainingConfig:
         self.expected_score = training_pipeline.MODEL_TRAINING_EXPECTED_SCORE
         self.fitting_thresholds = training_pipeline.MODEL_TRAINING_FITTING_THRESHOLDS
         self.training_timestamp = training_pipeline_config.timestamp
+
+class ModelPusherConfig:
+    def __init__(self, artifact_dir: str, final_model_dir: str = None):
+        self.artifact_dir = artifact_dir
+        # Default to 'final_model' at project root if not specified
+        self.final_model_dir = final_model_dir or os.path.abspath(os.path.join(os.getcwd(), 'final_model'))
