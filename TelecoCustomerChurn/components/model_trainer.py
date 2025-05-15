@@ -22,6 +22,7 @@ from xgboost import XGBClassifier
 from imblearn.over_sampling import SMOTE
 from imblearn.pipeline import Pipeline as ImbPipeline
 from sklearn.feature_selection import SelectFromModel
+import datetime
 
 
 class ModelTrainer:
@@ -169,60 +170,55 @@ class ModelTrainer:
     def initiate_model_training(self) -> ModelTrainingArtifact:
         try:
             logging.info("Starting model training process.")
-            import mlflow
+            # Load the preprocessed train and test data
+            logging.info(f"Loading preprocessed train data from: {self.data_transformation_artifact.transformed_train_file_path}")
+            X_train = load_numpy_array_data(self.data_transformation_artifact.transformed_train_file_path)
+            y_train = load_numpy_array_data(self.data_transformation_artifact.transformed_train_target_file_path)
+            logging.info(f"Loading preprocessed test data from: {self.data_transformation_artifact.transformed_test_file_path}")   
+            X_test = load_numpy_array_data(self.data_transformation_artifact.transformed_test_file_path)
+            y_test = load_numpy_array_data(self.data_transformation_artifact.transformed_test_target_file_path)
+            # Check if the data is loaded correctly
+            if X_train is None or y_train is None or X_test is None or y_test is None:
+                logging.error("Failed to load the preprocessed data.")
+                raise ValueError("Failed to load the preprocessed data.")
+            # Check if the data is empty
+            if X_train.size == 0 or y_train.size == 0 or X_test.size == 0 or y_test.size == 0:
+                logging.error("The preprocessed data is empty.")
+                raise ValueError("The preprocessed data is empty.")
+            logging.info(f"Train data shape: {X_train.shape}, Train target shape: {y_train.shape}")
+            logging.info(f"Test data shape: {X_test.shape}, Test target shape: {y_test.shape}")
+            # model training
+            logging.info("Training the model.")
+            best_model, model_report = self.train_model(X_train, y_train, X_test, y_test)
+            # Robust error handling for model_report
+            if not model_report or 'best_model' not in model_report:
+                logging.error("Model training did not return a valid model_report. Check evaluate_models for errors.")
+                raise ValueError("Model training did not return a valid model_report. Check evaluate_models for errors.")
+            best_model_name = model_report['best_model']
+            # Set MLflow experiment and run name
             mlflow.set_experiment("TelecoCustomerChurn_Model_Training")
-            with mlflow.start_run(run_name="model_training") as run:
-                # Load the preprocessed train and test data
-                logging.info(f"Loading preprocessed train data from: {self.data_transformation_artifact.transformed_train_file_path}")
-                X_train = load_numpy_array_data(self.data_transformation_artifact.transformed_train_file_path)
-                y_train = load_numpy_array_data(self.data_transformation_artifact.transformed_train_target_file_path)
-                logging.info(f"Loading preprocessed test data from: {self.data_transformation_artifact.transformed_test_file_path}")   
-                X_test = load_numpy_array_data(self.data_transformation_artifact.transformed_test_file_path)
-                y_test = load_numpy_array_data(self.data_transformation_artifact.transformed_test_target_file_path)
-                # Check if the data is loaded correctly
-                if X_train is None or y_train is None or X_test is None or y_test is None:
-                    logging.error("Failed to load the preprocessed data.")
-                    raise ValueError("Failed to load the preprocessed data.")
-                # Check if the data is empty
-                if X_train.size == 0 or y_train.size == 0 or X_test.size == 0 or y_test.size == 0:
-                    logging.error("The preprocessed data is empty.")
-                    raise ValueError("The preprocessed data is empty.")
-                logging.info(f"Train data shape: {X_train.shape}, Train target shape: {y_train.shape}")
-                logging.info(f"Test data shape: {X_test.shape}, Test target shape: {y_test.shape}")
-                # model training
-                logging.info("Training the model.")
-                best_model, model_report = self.train_model(X_train, y_train, X_test, y_test)
-                # Robust error handling for model_report
-                if not model_report or 'best_model' not in model_report:
-                    logging.error("Model training did not return a valid model_report. Check evaluate_models for errors.")
-                    raise ValueError("Model training did not return a valid model_report. Check evaluate_models for errors.")
-                best_model_name = model_report['best_model']
+            run_name = f"model_training_{best_model_name}_{datetime.datetime.now().strftime('%Y%m%d_%H%M%S')}"
+            with mlflow.start_run() as run:
+                mlflow.set_tag("mlflow.runName", run_name)
                 # Ensure all output directories exist before saving files
                 logging.info("Ensuring all output directories exist for model, metrics, and report.")
                 os.makedirs(self.model_training_config.model_dir, exist_ok=True)
                 os.makedirs(self.model_training_config.metrics_dir, exist_ok=True)
                 os.makedirs(self.model_training_config.report_dir, exist_ok=True)
                 # Evaluate metrics for best model
-                from TelecoCustomerChurn.utils.ml_utils.metric.classification_metric import evaluate_classification_model
-                logging.info("Generating predictions and probabilities for train and test sets.")
                 train_pred = best_model.predict(X_train)
                 test_pred = best_model.predict(X_test)
                 train_proba = best_model.predict_proba(X_train)[:, 1] if hasattr(best_model, 'predict_proba') else None
                 test_proba = best_model.predict_proba(X_test)[:, 1] if hasattr(best_model, 'predict_proba') else None
-                logging.info("Evaluating classification metrics for train and test sets.")
                 train_metrics = evaluate_classification_model(y_train, train_pred, train_proba)
                 test_metrics = evaluate_classification_model(y_test, test_pred, test_proba)
                 # Save the best model with preprocessor
-                logging.info(f"Loading preprocessor object from: {self.data_transformation_artifact.preprocessed_object_file_path}")
                 preprocessed_object = load_object(self.data_transformation_artifact.preprocessed_object_file_path)
-                from TelecoCustomerChurn.utils.ml_utils.model.estimator import TelecoCustomerChurnModel
                 churn_model = TelecoCustomerChurnModel(preprocessed_object=preprocessed_object, model=best_model)
                 model_save_path = os.path.join(self.model_training_config.model_dir, os.path.basename(self.model_training_config.model_file_path))
-                logging.info(f"Saving trained model to: {model_save_path}")
                 save_object(file_path=model_save_path, obj=churn_model)
                 # Save metrics to metrics.yaml in metrics_dir
                 metrics_file_path = os.path.join(self.model_training_config.metrics_dir, os.path.basename(self.model_training_config.metrics_file_path))
-                logging.info(f"Saving model report to metrics file: {metrics_file_path}")
                 clean_model_report = convert_numpy_types(model_report)
                 save_yaml_file(metrics_file_path, clean_model_report)
                 # Save a simple report to report.yaml in report_dir
@@ -233,25 +229,22 @@ class ModelTrainer:
                     'train_metrics': convert_numpy_types(asdict(train_metrics)),
                     'test_metrics': convert_numpy_types(asdict(test_metrics)),
                 }
-                logging.info(f"Saving summary report to: {report_file_path}")
                 save_yaml_file(report_file_path, report_content)
                 # MLflow logging
                 mlflow.log_param("best_model", model_report['best_model'])
                 for param_name, param_value in model_report['best_model_params'].items():
                     mlflow.log_param(param_name, param_value)
                 for metric_name, metric_value in model_report['best_model_metrics'].items():
-                    # Only log scalar metrics, skip dict/list (e.g., confusion_matrix)
                     if isinstance(metric_value, (int, float)):
                         mlflow.log_metric(metric_name, float(metric_value))
-                # Log train and test metrics (skip confusion_matrix)
                 for k, v in convert_numpy_types(asdict(train_metrics)).items():
                     if k == "confusion_matrix":
-                        continue  # Do not log confusion_matrix values as metrics
+                        continue
                     if isinstance(v, (int, float)):
                         mlflow.log_metric(f"train_{k}", float(v))
                 for k, v in convert_numpy_types(asdict(test_metrics)).items():
                     if k == "confusion_matrix":
-                        continue  # Do not log confusion_matrix values as metrics
+                        continue
                     if isinstance(v, (int, float)):
                         mlflow.log_metric(f"test_{k}", float(v))
                 # Plot and log confusion matrix for train set
@@ -358,12 +351,8 @@ class ModelTrainer:
                 mlflow.log_artifact(metrics_file_path, artifact_path="metrics")
                 mlflow.log_artifact(report_file_path, artifact_path="report")
                 # Log model to MLflow using the appropriate flavor
-                import mlflow.sklearn
                 mlflow.sklearn.log_model(best_model, artifact_path="model_mlflow", input_example=X_train[:5])
-                # Prepare ModelTrainerArtifact (update as needed for your artifact_entity.py)
-                from TelecoCustomerChurn.entity.artifact_entity import ModelTrainingArtifact, ClassificationMetricArtifact
-                logging.info("Creating metric artifacts for train and test sets.")
-                # train_metrics and test_metrics are already ClassificationMetricArtifact objects
+                # Prepare ModelTrainerArtifact
                 train_metric_artifact = train_metrics
                 test_metric_artifact = test_metrics
                 artifact = ModelTrainingArtifact(
