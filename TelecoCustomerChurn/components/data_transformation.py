@@ -8,6 +8,8 @@ from sklearn.pipeline import Pipeline
 from sklearn.impute import SimpleImputer
 from sklearn.impute import KNNImputer
 from sklearn.preprocessing import StandardScaler, OneHotEncoder
+from sklearn.feature_selection import SelectFromModel
+from sklearn.ensemble import RandomForestClassifier
 import sys
 import os
 import pandas as pd
@@ -82,12 +84,21 @@ class DataTransformation:
             os.makedirs(os.path.dirname(self.data_transformation_config.transformed_train_target_file_path), exist_ok=True)
             os.makedirs(os.path.dirname(self.data_transformation_config.transformed_test_target_file_path), exist_ok=True)
             os.makedirs(os.path.dirname(self.data_transformation_config.preprocessed_object_file_path), exist_ok=True)
+            # --- PATCH: Add feature selection to the pipeline ---
+            # Fit feature selector on the training data after preprocessing
+            feature_selector = SelectFromModel(RandomForestClassifier(n_estimators=100, class_weight='balanced', random_state=42), threshold='median')
+            # Create a full pipeline: preprocessing + feature selection
+            from sklearn.pipeline import Pipeline as SklearnPipeline
+            full_pipeline = SklearnPipeline([
+                ('preprocessor', preprocessor),
+                ('feature_selection', feature_selector)
+            ])
             # Fit and transform the training data
-            logging.info("Fitting and transforming training data.")
-            X_train_transformed = preprocessor.fit_transform(X_train)
+            logging.info("Fitting and transforming training data with full pipeline (preprocessing + feature selection).")
+            X_train_transformed = full_pipeline.fit_transform(X_train, y_train)
             # Transform the test data
-            logging.info("Transforming test data.")
-            X_test_transformed = preprocessor.transform(X_test)
+            logging.info("Transforming test data with full pipeline.")
+            X_test_transformed = full_pipeline.transform(X_test)
             # Ensure dense arrays for saving
             if hasattr(X_train_transformed, 'toarray'):
                 X_train_transformed = X_train_transformed.toarray()
@@ -102,14 +113,16 @@ class DataTransformation:
             save_numpy_array_data(self.data_transformation_config.transformed_train_target_file_path, y_train_encoded.values)
             logging.info(f"Saving encoded test target to: {self.data_transformation_config.transformed_test_target_file_path}")
             save_numpy_array_data(self.data_transformation_config.transformed_test_target_file_path, y_test_encoded.values)
-            # Save the transformed data as numpy arrays
+            # Save the transformed data as numpy arrays (after full pipeline)
+            logging.info(f"Transformed train shape: {X_train_transformed.shape}")
+            logging.info(f"Transformed test shape: {X_test_transformed.shape}")
             logging.info(f"Saving transformed train data to: {self.data_transformation_config.transformed_train_file_path}")
             save_numpy_array_data(self.data_transformation_config.transformed_train_file_path, X_train_transformed)
             logging.info(f"Saving transformed test data to: {self.data_transformation_config.transformed_test_file_path}")
             save_numpy_array_data(self.data_transformation_config.transformed_test_file_path, X_test_transformed)
-            # Save the preprocessor object 
+            # Save the full pipeline (preprocessor + feature selector) as the preprocessor object
             logging.info(f"Saving preprocessor object to: {self.data_transformation_config.preprocessed_object_file_path}")
-            save_object(self.data_transformation_config.preprocessed_object_file_path, preprocessor)
+            save_object(self.data_transformation_config.preprocessed_object_file_path, full_pipeline)
             # Create and return the DataTransformationArtifact
             data_transformation_artifact = DataTransformationArtifact(
                 transformed_train_file_path=self.data_transformation_config.transformed_train_file_path,

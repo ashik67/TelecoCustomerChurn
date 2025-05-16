@@ -13,6 +13,7 @@ mlflow
 xgboost
 imbalanced-learn
 dagshub
-
+bentoml
+fastapi
 
 #-e .

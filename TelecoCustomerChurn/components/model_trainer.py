@@ -21,7 +21,6 @@ import numpy as np
 from xgboost import XGBClassifier
 from imblearn.over_sampling import SMOTE
 from imblearn.pipeline import Pipeline as ImbPipeline
-from sklearn.feature_selection import SelectFromModel
 import datetime
 
 import dagshub
@@ -45,7 +44,7 @@ class ModelTrainer:
         Train multiple models, select the best one based on accuracy, and return the best trained model and the model report.
         """
         try:
-            logging.info("Setting up models and hyperparameter grids for training with class imbalance handling and feature selection.")
+            logging.info("Setting up models and hyperparameter grids for training with class imbalance handling.")
             # Compute class weights for XGBoost
             from collections import Counter
             counter = Counter(y_train)
@@ -61,56 +60,44 @@ class ModelTrainer:
                 'DecisionTreeClassifier': DecisionTreeClassifier(class_weight='balanced', random_state=42),
                 'XGBClassifier': XGBClassifier(eval_metric='logloss', scale_pos_weight=scale_pos_weight, random_state=42)
             }
-            # Optionally add feature selection (using RandomForest as selector)
-            feature_selector = SelectFromModel(RandomForestClassifier(n_estimators=100, class_weight='balanced', random_state=42), threshold='median')
             # Build pipelines: Only use SMOTE for models that do not natively handle imbalance
             models = {
                 'RandomForestClassifier': ImbPipeline([
                     # No SMOTE for RandomForest (has class_weight)
-                    ('feature_selection', feature_selector),
                     ('clf', base_estimators['RandomForestClassifier'])
                 ]),
                 'GradientBoostingClassifier': ImbPipeline([
                     # No SMOTE for GradientBoosting (can be sensitive to resampling)
-                    ('feature_selection', feature_selector),
                     ('clf', base_estimators['GradientBoostingClassifier'])
                 ]),
                 'AdaBoostClassifier': ImbPipeline([
                     # No SMOTE for AdaBoost (can be sensitive to resampling)
-                    ('feature_selection', feature_selector),
                     ('clf', base_estimators['AdaBoostClassifier'])
                 ]),
                 'DecisionTreeClassifier': ImbPipeline([
                     # No SMOTE for DecisionTree (has class_weight)
-                    ('feature_selection', feature_selector),
                     ('clf', base_estimators['DecisionTreeClassifier'])
                 ]),
                 'XGBClassifier': ImbPipeline([
                     # No SMOTE for XGBoost (has scale_pos_weight)
-                    ('feature_selection', feature_selector),
                     ('clf', base_estimators['XGBClassifier'])
                 ]),
                 # Stacking ensemble using the above pipelines as base estimators
                 'StackingClassifier': StackingClassifier(
                     estimators=[
                         ('rf', ImbPipeline([
-                            ('feature_selection', feature_selector),
                             ('clf', base_estimators['RandomForestClassifier'])
                         ])),
                         ('gb', ImbPipeline([
-                            ('feature_selection', feature_selector),
                             ('clf', base_estimators['GradientBoostingClassifier'])
                         ])),
                         ('xgb', ImbPipeline([
-                            ('feature_selection', feature_selector),
                             ('clf', base_estimators['XGBClassifier'])
                         ])),
                         ('ada', ImbPipeline([
-                            ('feature_selection', feature_selector),
                             ('clf', base_estimators['AdaBoostClassifier'])
                         ])),
                         ('dt', ImbPipeline([
-                            ('feature_selection', feature_selector),
                             ('clf', base_estimators['DecisionTreeClassifier'])
                         ])),
                     ],
@@ -155,7 +142,7 @@ class ModelTrainer:
                     # 'final_estimator__C': [0.1, 1.0, 10.0],
                 }
             }
-            logging.info("Beginning model evaluation and hyperparameter tuning with SMOTE and feature selection.")
+            logging.info("Beginning model evaluation and hyperparameter tuning with SMOTE.")
             model_report = evaluate_models(X_train, y_train, X_test, y_test, models, params)
             best_model_name = model_report['best_model']
             best_model_params = model_report['best_model_params']
@@ -190,6 +177,7 @@ class ModelTrainer:
                 raise ValueError("The preprocessed data is empty.")
             logging.info(f"Train data shape: {X_train.shape}, Train target shape: {y_train.shape}")
             logging.info(f"Test data shape: {X_test.shape}, Test target shape: {y_test.shape}")
+
             # model training
             logging.info("Training the model.")
             best_model, model_report = self.train_model(X_train, y_train, X_test, y_test)
