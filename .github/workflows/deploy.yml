@@ -8,7 +8,7 @@ env:
   ECR_REPOSITORY: telecocustomerchurn
   AWS_REGION: us-east-1
   IMAGE_TAG: latest
-  EC2_USER: ubuntu
+  EC2_USER: ec2-user
   EC2_HOST: ec2-52-91-243-242.compute-1.amazonaws.com
   CONTAINER_NAME: teleco-churn-fastapi
 
