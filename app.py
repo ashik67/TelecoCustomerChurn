@@ -1,9 +1,12 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Request, Form, File, UploadFile
+from fastapi.templating import Jinja2Templates
+from fastapi.responses import HTMLResponse, RedirectResponse
 from pydantic import BaseModel
 from typing import List, Dict, Any
 import pandas as pd
 import os
 import pickle
+import io
 
 # Paths to model and preprocessor
 FINAL_MODEL_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), 'final_model'))
@@ -25,12 +28,60 @@ app = FastAPI(
     redoc_url="/redoc"
 )
 
+# Set up Jinja2 templates
+templates = Jinja2Templates(directory="templates")
+
 class PredictRequest(BaseModel):
     """
     Request body for /predict endpoint.
     data: List of records (dicts) with feature values for prediction.
     """
     data: List[Dict[str, Any]]
+
+@app.get("/", response_class=HTMLResponse)
+def home(request: Request):
+    features = None
+    features_error = None
+    try:
+        if hasattr(preprocessor, 'feature_names_in_'):
+            features = list(preprocessor.feature_names_in_)
+    except Exception as e:
+        features_error = str(e)
+    return templates.TemplateResponse("frontend.html", {"request": request, "features": features, "features_error": features_error})
+
+@app.post("/predict", response_class=HTMLResponse)
+def predict_form(request: Request, **form_data):
+    features = list(preprocessor.feature_names_in_) if hasattr(preprocessor, 'feature_names_in_') else []
+    try:
+        input_df = pd.DataFrame([{f: form_data.get(f) for f in features}])
+        prediction = model.predict(input_df)
+        if hasattr(prediction, 'tolist'):
+            prediction = prediction.tolist()[0]
+        return templates.TemplateResponse("frontend.html", {"request": request, "features": features, "prediction": prediction})
+    except Exception as e:
+        return templates.TemplateResponse("frontend.html", {"request": request, "features": features, "predict_error": str(e)})
+
+@app.get("/features", response_class=HTMLResponse)
+def features_page(request: Request):
+    features = None
+    features_error = None
+    try:
+        if hasattr(preprocessor, 'feature_names_in_'):
+            features = list(preprocessor.feature_names_in_)
+    except Exception as e:
+        features_error = str(e)
+    return templates.TemplateResponse("frontend.html", {"request": request, "features": features, "features_error": features_error})
+
+@app.post("/train", response_class=HTMLResponse)
+def train_page(request: Request):
+    features = list(preprocessor.feature_names_in_) if hasattr(preprocessor, 'feature_names_in_') else []
+    try:
+        from TelecoCustomerChurn.pipeline.training_pipeline import TrainingPipeline
+        pipeline = TrainingPipeline()
+        pipeline.run_pipeline()
+        return templates.TemplateResponse("frontend.html", {"request": request, "features": features, "train_status": "Training pipeline completed successfully."})
+    except Exception as e:
+        return templates.TemplateResponse("frontend.html", {"request": request, "features": features, "train_error": str(e)})
 
 @app.post("/predict", summary="Predict customer churn", response_description="Predicted churn labels")
 def predict(request: PredictRequest):
@@ -87,3 +138,27 @@ def train():
         return {"status": "Training pipeline completed successfully."}
     except Exception as e:
         return {"error": str(e)}
+
+@app.post("/predict_csv", response_class=HTMLResponse)
+def predict_csv(request: Request, file: UploadFile = File(...)):
+    features = list(preprocessor.feature_names_in_) if hasattr(preprocessor, 'feature_names_in_') else []
+    try:
+        # Read uploaded CSV file into DataFrame
+        contents = file.file.read()
+        df = pd.read_csv(io.StringIO(contents.decode("utf-8")))
+        # Validate columns
+        if features:
+            missing_cols = set(features) - set(df.columns)
+            extra_cols = set(df.columns) - set(features)
+            if missing_cols:
+                return templates.TemplateResponse("frontend.html", {"request": request, "features": features, "predict_error": f"Missing columns: {sorted(missing_cols)}"})
+            if extra_cols:
+                return templates.TemplateResponse("frontend.html", {"request": request, "features": features, "predict_error": f"Unexpected columns: {sorted(extra_cols)}. Only these columns are allowed: {features}"})
+            df = df[features]
+        prediction = model.predict(df)
+        if hasattr(prediction, 'tolist'):
+            prediction = prediction.tolist()
+        # Show first 10 predictions for feedback
+        return templates.TemplateResponse("frontend.html", {"request": request, "features": features, "prediction": prediction[:10], "predict_info": f"Showing first 10 of {len(prediction)} predictions."})
+    except Exception as e:
+        return templates.TemplateResponse("frontend.html", {"request": request, "features": features, "predict_error": str(e)})

@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teleco Customer Churn Predictor</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 2em; background: #f7f7f7; }
+        h1 { color: #2c3e50; }
+        form, .features, .train { background: #fff; padding: 1.5em; border-radius: 8px; box-shadow: 0 2px 8px #0001; margin-bottom: 2em; }
+        label { display: block; margin-top: 1em; }
+        input, select { width: 100%; padding: 0.5em; margin-top: 0.2em; }
+        button { margin-top: 1.5em; padding: 0.7em 2em; background: #2c3e50; color: #fff; border: none; border-radius: 4px; cursor: pointer; }
+        .result, .error { margin-top: 1em; font-weight: bold; }
+        .error { color: #c0392b; }
+        .result { color: #27ae60; }
+        .features-list { margin: 0.5em 0 0 1em; }
+    </style>
+</head>
+<body>
+    <h1>Teleco Customer Churn Predictor</h1>
+
+    <div class="features">
+        <form method="get" action="/features">
+            <button type="submit">Show Expected Features</button>
+        </form>
+        {% if features %}
+        <ul class="features-list">
+            {% for f in features %}
+            <li>{{ f }}</li>
+            {% endfor %}
+        </ul>
+        {% endif %}
+        {% if features_error %}
+        <div class="error">{{ features_error }}</div>
+        {% endif %}
+    </div>
+
+    <form id="predict-form" method="post" action="/predict">
+        <h2>Predict Churn</h2>
+        <div id="input-fields">
+        {% if features %}
+            {% for f in features %}
+            <label>{{ f }}<input name="{{ f }}" required></label>
+            {% endfor %}
+        {% endif %}
+        </div>
+        <button type="submit">Predict</button>
+        {% if prediction is defined %}
+        <div class="result">Prediction: {{ prediction }}</div>
+        {% endif %}
+        {% if predict_error %}
+        <div class="error">{{ predict_error }}</div>
+        {% endif %}
+    </form>
+
+    <div class="train">
+        <h2>Trigger Model Retraining</h2>
+        <form method="post" action="/train">
+            <button type="submit">Run Training Pipeline</button>
+        </form>
+        {% if train_status %}
+        <div class="result">{{ train_status }}</div>
+        {% endif %}
+        {% if train_error %}
+        <div class="error">{{ train_error }}</div>
+        {% endif %}
+    </div>
+
+    <form method="post" action="/predict_csv" enctype="multipart/form-data" style="margin-bottom:2em;">
+        <h2>Batch Predict from CSV</h2>
+        <input type="file" name="file" accept=".csv" required>
+        <button type="submit">Upload & Predict</button>
+        {% if predict_info %}
+        <div class="result">{{ predict_info }}</div>
+        {% endif %}
+        {% if prediction is defined and predict_info %}
+        <div class="result">Predictions: {{ prediction }}</div>
+        {% endif %}
+        {% if predict_error %}
+        <div class="error">{{ predict_error }}</div>
+        {% endif %}
+        <div style="margin-top:1em;">
+            <strong>Docs:</strong>
+            <ul>
+                <li><a href="/docs" target="_blank">Swagger UI (OpenAPI docs)</a></li>
+                <li><a href="/redoc" target="_blank">ReDoc (OpenAPI docs)</a></li>
+                <li><a href="https://github.com/your-org/your-repo" target="_blank">Project README</a></li>
+            </ul>
+        </div>
+    </form>
+</body>
+</html>
