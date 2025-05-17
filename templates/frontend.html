@@ -19,29 +19,88 @@
 </head>
 <body>
     <h1>Teleco Customer Churn Predictor</h1>
+    <p style="color:#555; font-size:1.1em; margin-bottom:2em;">
+        The model is trained to predict churn using the most important features: <strong>SeniorCitizen, tenure, InternetService, Contract, PaymentMethod, MonthlyCharges, TotalCharges</strong>. Please fill in all required fields below.
+    </p>
 
-    <div class="features">
-        <form method="get" action="/features">
-            <button type="submit">Show Expected Features</button>
-        </form>
-        {% if features %}
-        <ul class="features-list">
-            {% for f in features %}
-            <li>{{ f }}</li>
-            {% endfor %}
-        </ul>
-        {% endif %}
-        {% if features_error %}
-        <div class="error">{{ features_error }}</div>
-        {% endif %}
-    </div>
-
-    <form id="predict-form" method="post" action="/predict">
+    <form id="predict-form" method="post" action="/predict_form" enctype="multipart/form-data">
         <h2>Predict Churn</h2>
         <div id="input-fields">
         {% if features %}
             {% for f in features %}
-            <label>{{ f }}<input name="{{ f }}" required></label>
+                {% if f == 'gender' %}
+                    <label>{{ f }}
+                        <select name="{{ f }}" required>
+                            <option value="Male" selected>Male</option>
+                            <option value="Female">Female</option>
+                        </select>
+                    </label>
+                {% elif f == 'SeniorCitizen' %}
+                    <label>{{ f }}
+                        <select name="{{ f }}" required>
+                            <option value="0" selected>No</option>
+                            <option value="1">Yes</option>
+                        </select>
+                    </label>
+                {% elif f == 'Partner' or f == 'Dependents' or f == 'PhoneService' or f == 'PaperlessBilling' %}
+                    <label>{{ f }}
+                        <select name="{{ f }}" required>
+                            <option value="Yes" selected>Yes</option>
+                            <option value="No">No</option>
+                        </select>
+                    </label>
+                {% elif f == 'MultipleLines' %}
+                    <label>{{ f }}
+                        <select name="{{ f }}" required>
+                            <option value="No" selected>No</option>
+                            <option value="Yes">Yes</option>
+                            <option value="No phone service">No phone service</option>
+                        </select>
+                    </label>
+                {% elif f == 'InternetService' %}
+                    <label>{{ f }}
+                        <select name="{{ f }}" required>
+                            <option value="DSL" selected>DSL</option>
+                            <option value="Fiber optic">Fiber optic</option>
+                            <option value="No">No</option>
+                        </select>
+                    </label>
+                {% elif f in ['OnlineSecurity', 'OnlineBackup', 'DeviceProtection', 'TechSupport', 'StreamingTV', 'StreamingMovies'] %}
+                    <label>{{ f }}
+                        <select name="{{ f }}" required>
+                            <option value="No" selected>No</option>
+                            <option value="Yes">Yes</option>
+                            <option value="No internet service">No internet service</option>
+                        </select>
+                    </label>
+                {% elif f == 'Contract' %}
+                    <label>{{ f }}
+                        <select name="{{ f }}" required>
+                            <option value="Month-to-month" selected>Month-to-month</option>
+                            <option value="One year">One year</option>
+                            <option value="Two year">Two year</option>
+                        </select>
+                    </label>
+                {% elif f == 'PaymentMethod' %}
+                    <label>{{ f }}
+                        <select name="{{ f }}" required>
+                            <option value="Electronic check" selected>Electronic check</option>
+                            <option value="Mailed check">Mailed check</option>
+                            <option value="Bank transfer (automatic)">Bank transfer (automatic)</option>
+                            <option value="Credit card (automatic)">Credit card (automatic)</option>
+                        </select>
+                    </label>
+                {% elif f == 'tenure' %}
+                    <label>{{ f }}<input name="{{ f }}" type="number" step="any" value="1" required></label>
+                {% elif f == 'MonthlyCharges' %}
+                    <label>{{ f }}<input name="{{ f }}" type="number" step="any" value="29.85" required></label>
+                {% elif f == 'TotalCharges' %}
+                    <label>{{ f }}<input name="{{ f }}" type="number" step="any" value="29.85" required></label>
+                {% elif f == 'customerID' %}
+                    <label>{{ f }}<input name="{{ f }}" value="12345-ABCDE" required></label>
+                {% else %}
+                    <label>{{ f }}<input name="{{ f }}" value="" required></label>
+                {% endif %}
             {% endfor %}
         {% endif %}
         </div>
@@ -54,20 +113,7 @@
         {% endif %}
     </form>
 
-    <div class="train">
-        <h2>Trigger Model Retraining</h2>
-        <form method="post" action="/train">
-            <button type="submit">Run Training Pipeline</button>
-        </form>
-        {% if train_status %}
-        <div class="result">{{ train_status }}</div>
-        {% endif %}
-        {% if train_error %}
-        <div class="error">{{ train_error }}</div>
-        {% endif %}
-    </div>
-
-    <form method="post" action="/predict_csv" enctype="multipart/form-data" style="margin-bottom:2em;">
+    <form method="post" action="/predict_csv_form" enctype="multipart/form-data" style="margin-bottom:2em;">
         <h2>Batch Predict from CSV</h2>
         <input type="file" name="file" accept=".csv" required>
         <button type="submit">Upload & Predict</button>

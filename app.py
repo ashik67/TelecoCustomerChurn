@@ -1,6 +1,6 @@
 from fastapi import FastAPI, Request, Form, File, UploadFile
 from fastapi.templating import Jinja2Templates
-from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse
 from pydantic import BaseModel
 from typing import List, Dict, Any
 import pandas as pd
@@ -42,24 +42,36 @@ class PredictRequest(BaseModel):
 def home(request: Request):
     features = None
     features_error = None
+    prediction = request.query_params.get("prediction")
+    predict_error = request.query_params.get("predict_error")
     try:
         if hasattr(preprocessor, 'feature_names_in_'):
             features = list(preprocessor.feature_names_in_)
     except Exception as e:
         features_error = str(e)
-    return templates.TemplateResponse("frontend.html", {"request": request, "features": features, "features_error": features_error})
+    return templates.TemplateResponse("frontend.html", {
+        "request": request,
+        "features": features,
+        "features_error": features_error,
+        "prediction": prediction if prediction not in [None, "None", ""] else None,
+        "predict_error": predict_error if predict_error not in [None, "None", ""] else None
+    })
 
-@app.post("/predict", response_class=HTMLResponse)
-def predict_form(request: Request, **form_data):
+@app.post("/predict_form", response_class=HTMLResponse)
+async def predict_form(request: Request):
     features = list(preprocessor.feature_names_in_) if hasattr(preprocessor, 'feature_names_in_') else []
+    form = await request.form()
     try:
-        input_df = pd.DataFrame([{f: form_data.get(f) for f in features}])
+        input_df = pd.DataFrame([{f: form.get(f) for f in features}])
         prediction = model.predict(input_df)
         if hasattr(prediction, 'tolist'):
             prediction = prediction.tolist()[0]
-        return templates.TemplateResponse("frontend.html", {"request": request, "features": features, "prediction": prediction})
+        # Redirect to home page with prediction as a query parameter
+        url = app.url_path_for("home") + f"?prediction={prediction}"
+        return RedirectResponse(url=url, status_code=303)
     except Exception as e:
-        return templates.TemplateResponse("frontend.html", {"request": request, "features": features, "predict_error": str(e)})
+        url = app.url_path_for("home") + f"?predict_error={str(e)}"
+        return RedirectResponse(url=url, status_code=303)
 
 @app.get("/features", response_class=HTMLResponse)
 def features_page(request: Request):
@@ -83,7 +95,7 @@ def train_page(request: Request):
     except Exception as e:
         return templates.TemplateResponse("frontend.html", {"request": request, "features": features, "train_error": str(e)})
 
-@app.post("/predict", summary="Predict customer churn", response_description="Predicted churn labels")
+@app.post("/predict", summary="Predict customer churn", response_description="Predicted churn labels", response_class=JSONResponse)
 def predict(request: PredictRequest):
     """
     Predict customer churn for one or more records.
@@ -103,30 +115,30 @@ def predict(request: PredictRequest):
             missing_cols = set(expected_cols) - set(input_cols)
             extra_cols = set(input_cols) - set(expected_cols)
             if missing_cols:
-                return {"error": f"Missing columns: {sorted(missing_cols)}"}
+                return JSONResponse(content={"error": f"Missing columns: {sorted(missing_cols)}"}, status_code=400)
             if extra_cols:
-                return {"error": f"Unexpected columns: {sorted(extra_cols)}. Only these columns are allowed: {expected_cols}"}
+                return JSONResponse(content={"error": f"Unexpected columns: {sorted(extra_cols)}. Only these columns are allowed: {expected_cols}"}, status_code=400)
             # Reorder columns
             input_df = input_df[expected_cols]
         # Predict
         prediction = model.predict(input_df)
         if hasattr(prediction, 'tolist'):
             prediction = prediction.tolist()
-        return {"prediction": prediction}
+        return JSONResponse(content={"prediction": prediction})
     except Exception as e:
-        return {"error": str(e)}
+        return JSONResponse(content={"error": str(e)}, status_code=500)
 
-@app.get("/features", summary="Get expected feature columns", response_description="List of expected features")
+@app.get("/features", summary="Get expected feature columns", response_description="List of expected features", response_class=JSONResponse)
 def features():
     """
     Returns the list of expected feature columns for prediction input.
     """
     if hasattr(preprocessor, 'feature_names_in_'):
-        return {"features": list(preprocessor.feature_names_in_)}
+        return JSONResponse(content={"features": list(preprocessor.feature_names_in_)})
     else:
-        return {"error": "Preprocessor does not expose feature names."}
+        return JSONResponse(content={"error": "Preprocessor does not expose feature names."}, status_code=500)
 
-@app.post("/train", summary="Trigger model retraining", response_description="Training status message")
+@app.post("/train", summary="Trigger model retraining", response_description="Training status message", response_class=JSONResponse)
 def train():
     """
     Triggers the training pipeline. Returns a success or error message.
@@ -135,18 +147,37 @@ def train():
         from TelecoCustomerChurn.pipeline.training_pipeline import TrainingPipeline
         pipeline = TrainingPipeline()
         pipeline.run_pipeline()
-        return {"status": "Training pipeline completed successfully."}
+        return JSONResponse(content={"status": "Training pipeline completed successfully."})
     except Exception as e:
-        return {"error": str(e)}
+        return JSONResponse(content={"error": str(e)}, status_code=500)
 
-@app.post("/predict_csv", response_class=HTMLResponse)
-def predict_csv(request: Request, file: UploadFile = File(...)):
+@app.post("/predict_csv", response_class=JSONResponse)
+def predict_csv_api(file: UploadFile = File(...)):
     features = list(preprocessor.feature_names_in_) if hasattr(preprocessor, 'feature_names_in_') else []
     try:
-        # Read uploaded CSV file into DataFrame
         contents = file.file.read()
         df = pd.read_csv(io.StringIO(contents.decode("utf-8")))
-        # Validate columns
+        if features:
+            missing_cols = set(features) - set(df.columns)
+            extra_cols = set(df.columns) - set(features)
+            if missing_cols:
+                return JSONResponse(content={"error": f"Missing columns: {sorted(missing_cols)}"}, status_code=400)
+            if extra_cols:
+                return JSONResponse(content={"error": f"Unexpected columns: {sorted(extra_cols)}. Only these columns are allowed: {features}"}, status_code=400)
+            df = df[features]
+        prediction = model.predict(df)
+        if hasattr(prediction, 'tolist'):
+            prediction = prediction.tolist()
+        return JSONResponse(content={"prediction": prediction})
+    except Exception as e:
+        return JSONResponse(content={"error": str(e)}, status_code=500)
+
+@app.post("/predict_csv_form", response_class=HTMLResponse)
+def predict_csv_form(request: Request, file: UploadFile = File(...)):
+    features = list(preprocessor.feature_names_in_) if hasattr(preprocessor, 'feature_names_in_') else []
+    try:
+        contents = file.file.read()
+        df = pd.read_csv(io.StringIO(contents.decode("utf-8")))
         if features:
             missing_cols = set(features) - set(df.columns)
             extra_cols = set(df.columns) - set(features)

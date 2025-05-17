@@ -94,6 +94,22 @@ POST /predict
 
 ---
 
+## Important Features Used for Prediction
+
+The model is trained to predict churn using the following most important features:
+
+- **SeniorCitizen**
+- **tenure**
+- **InternetService**
+- **Contract**
+- **PaymentMethod**
+- **MonthlyCharges**
+- **TotalCharges**
+
+Other features may be present in the dataset, but these are the primary drivers for the model's predictions.
+
+---
+
 ## Project Structure
 
 - `app.py` : FastAPI app with all endpoints and Jinja2 integration
