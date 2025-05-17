@@ -121,3 +121,57 @@ Other features may be present in the dataset, but these are the primary drivers 
 - `README.md` : Project documentation
 
 ---
+
+## ETL Pipeline
+
+This project uses a modular ETL pipeline to automate data ingestion, transformation, drift detection, and conditional retraining. Below is a summary of each step and how it is implemented:
+
+### 1. Data Fetch & Ingestion
+- Loads raw data from `Data/TelecoCustomerChurn.csv` (or external source if configured).
+- Validates schema using `data_schema/schema.yaml`.
+- Stores ingested data in the `artifacts/<timestamp>/data_ingestion/` directory for reproducibility.
+- Code: `TelecoCustomerChurn/pipeline/data_ingestion.py`
+
+### 2. Data Validation
+- Checks for missing values, schema mismatches, and data integrity.
+- Logs validation results and stores validated data in `artifacts/<timestamp>/data_validation/`.
+- Code: `TelecoCustomerChurn/pipeline/data_validation.py`
+
+### 3. Data Transformation
+- Applies feature engineering, encoding, and scaling using a preprocessor pipeline.
+- Saves transformed data and preprocessor object in `artifacts/<timestamp>/data_transformation/`.
+- Code: `TelecoCustomerChurn/pipeline/data_transformation.py`
+
+### 4. Model Training
+- Trains the model on transformed data using the most important features (see above).
+- Evaluates model performance and logs metrics to MLflow/Dagshub.
+- Saves model and artifacts in `final_model/` and `artifacts/<timestamp>/model_training/`.
+- Code: `TelecoCustomerChurn/pipeline/model_training.py`
+
+### 5. Drift Detection
+- Compares new data distribution to training data using statistical tests (e.g., KS-test, PSI).
+- If drift is detected, the pipeline stops (no auto-retrain unless enabled in your orchestration logic).
+- Drift detection logic is implemented within the main pipeline code (see `TelecoCustomerChurn/pipeline/`), not as a separate file.
+
+### 6. Conditional Retraining (Optional)
+- If enabled, triggers retraining when drift is detected or on schedule.
+- Uses the same pipeline as initial training for consistency.
+- Code: `TelecoCustomerChurn/pipeline/model_training.py`
+
+---
+
+## Pipeline Step Implementation Details
+
+Each stage of the ML pipeline is modularized and productionized for reliability, reproducibility, and easy orchestration:
+
+- **Data Ingestion**: Raw data is loaded from CSV or other sources, validated against a schema, and stored in the `artifacts/` directory with timestamped runs for traceability.
+- **Data Validation**: The pipeline checks for missing values, schema mismatches, and data drift. Validation reports are generated and stored as artifacts.
+- **Data Transformation**: Features are preprocessed (encoding, scaling, imputation) using robust pipelines. The preprocessor object is saved alongside the model for consistent inference.
+- **Model Training**: The pipeline trains a classifier (e.g., RandomForest, XGBoost) using the transformed data. Hyperparameters and metrics are tracked with MLflow and/or Dagshub.
+- **Model Evaluation**: The trained model is evaluated on a holdout set. Metrics (accuracy, ROC-AUC, etc.) and feature importances are logged for experiment tracking.
+- **Artifact Management**: All models, preprocessors, and reports are versioned and saved in `final_model/` and `artifacts/` for reproducibility and rollback.
+- **Experiment Tracking**: MLflow and Dagshub are used to log parameters, metrics, and artifacts for each run, enabling experiment comparison and auditability.
+- **Serving & Inference**: The latest model and preprocessor are loaded by the FastAPI app for real-time and batch predictions. The API ensures input validation and returns clear results.
+- **Retraining & Orchestration**: The `/train` endpoint or your own orchestration logic can trigger retraining. The pipeline supports ETL, drift detection, and conditional retraining, making it robust and production-ready.
+
+---
