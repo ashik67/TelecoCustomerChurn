@@ -23,6 +23,8 @@ from imblearn.over_sampling import SMOTE
 from imblearn.pipeline import Pipeline as ImbPipeline
 import datetime
 
+from TelecoCustomerChurn.cloud.s3_utils import upload_folder_to_s3
+
 import dagshub
 dagshub.init(repo_owner='ashik67', repo_name='TelecoCustomerChurn', mlflow=True)
 
@@ -360,6 +362,22 @@ class ModelTrainer:
                     test_metric_artifact=test_metric_artifact
                 )
                 logging.info(f"Model training pipeline completed successfully. ModelTrainerArtifact: {artifact}")
+
+                # --- S3 Integration: Upload model artifacts and final_model to S3 ---
+                s3_bucket = os.getenv('S3_BUCKET')
+                if s3_bucket:
+                    try:
+                        upload_folder_to_s3(self.model_training_config.model_dir, s3_bucket, f"model_training/{self.model_training_config.training_timestamp}/model")
+                        upload_folder_to_s3(self.model_training_config.metrics_dir, s3_bucket, f"model_training/{self.model_training_config.training_timestamp}/metrics")
+                        upload_folder_to_s3(self.model_training_config.report_dir, s3_bucket, f"model_training/{self.model_training_config.training_timestamp}/report")
+                        # Optionally, upload final_model folder if exists
+                        final_model_dir = os.path.abspath(os.path.join(os.getcwd(), 'final_model'))
+                        if os.path.exists(final_model_dir):
+                            upload_folder_to_s3(final_model_dir, s3_bucket, "final_model")
+                    except Exception as s3e:
+                        logging.error(f"S3 upload failed: {s3e}")
+                # --- End S3 Integration ---
+
                 return artifact
         except Exception as e:
             logging.error(f"Error during model training pipeline: {e}")

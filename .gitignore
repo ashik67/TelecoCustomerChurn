@@ -3,3 +3,4 @@ venv
 artifacts/
 mlruns/
 logs/
+final_model/

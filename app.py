@@ -7,11 +7,21 @@ import pandas as pd
 import os
 import pickle
 import io
+from TelecoCustomerChurn.cloud.s3_utils import download_folder_from_s3
 
 # Paths to model and preprocessor
 FINAL_MODEL_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), 'final_model'))
 MODEL_PATH = os.path.join(FINAL_MODEL_DIR, 'model.pkl')
 PREPROCESSOR_PATH = os.path.join(FINAL_MODEL_DIR, 'preprocessed_object.pkl')
+
+# Automatically download latest model from S3 at startup
+s3_bucket = os.getenv('S3_BUCKET')
+if s3_bucket:
+    try:
+        # Download the entire final_model folder from S3
+        download_folder_from_s3(s3_bucket, 'final_model', os.path.abspath('final_model'))
+    except Exception as s3e:
+        print(f"Warning: Could not download final_model from S3: {s3e}")
 
 # Load model and preprocessor
 with open(MODEL_PATH, 'rb') as f:

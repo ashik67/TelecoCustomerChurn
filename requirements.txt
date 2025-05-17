@@ -18,4 +18,5 @@ uvicorn
 cloudpickle
 joblib
 python-multipart
+boto3
 #-e .
