@@ -175,3 +175,39 @@ Each stage of the ML pipeline is modularized and productionized for reliability,
 - **Retraining & Orchestration**: The `/train` endpoint or your own orchestration logic can trigger retraining. The pipeline supports ETL, drift detection, and conditional retraining, making it robust and production-ready.
 
 ---
+
+## Environment Variables & Secrets
+
+This project uses environment variables to securely manage sensitive information and configuration. The following variables are required:
+
+| Variable     | Description                                 | Where to Set                |
+|--------------|---------------------------------------------|-----------------------------|
+| `MONGO_URI`  | MongoDB connection string (sensitive)       | `.env` (local), GitHub Secret (CI/CD) |
+| `S3_BUCKET`  | Name of the S3 bucket for model artifacts   | `.env` (local), GitHub Variable/Secret (CI/CD) |
+
+### Local Development
+- Create a `.env` file in the project root:
+  ```ini
+  MONGO_URI="your-mongodb-uri"
+  S3_BUCKET="your-s3-bucket-name"
+  ```
+- **Do not commit `.env` to git** (already in `.gitignore`).
+- The app will automatically load these variables if you use `python-dotenv` or similar, or you can set them in your shell.
+
+### Production / CI/CD (GitHub Actions)
+- Store `MONGO_URI` as a **GitHub Actions Secret**.
+- Store `S3_BUCKET` as a **GitHub Actions Variable** or Secret.
+- The deployment workflow injects these variables into the Docker container at runtime using the `-e` flag.
+- No sensitive values are ever stored in the repository.
+
+### Docker
+- When running locally with Docker, pass environment variables using `--env-file` or `-e`:
+  ```sh
+  docker run --env-file .env -p 8000:8000 teleco-churn-fastapi
+  ```
+  or
+  ```sh
+  docker run -e MONGO_URI="your-mongodb-uri" -e S3_BUCKET="your-s3-bucket-name" -p 8000:8000 teleco-churn-fastapi
+  ```
+
+---
