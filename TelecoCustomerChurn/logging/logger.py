@@ -16,4 +16,25 @@ logging.basicConfig(
     format='[%(asctime)s] %(levelname)s %(filename)s:%(lineno)d %(message)s',
     level=logging.INFO,
     datefmt='%Y-%m-%d %H:%M:%S'
-)   
+)
+
+# Add CloudWatch logging if AWS credentials and log group are set
+try:
+    import boto3
+    from watchtower import CloudWatchLogHandler
+    AWS_LOG_GROUP = os.getenv('CLOUDWATCH_LOG_GROUP', 'TelecoCustomerChurnLogs')
+    AWS_LOG_STREAM = os.getenv('CLOUDWATCH_LOG_STREAM', 'pipeline')
+    AWS_REGION = os.getenv('AWS_REGION', 'us-east-1')
+    if os.getenv('AWS_ACCESS_KEY_ID') or os.getenv('AWS_REGION') or os.getenv('AWS_PROFILE'):
+        cw_handler = CloudWatchLogHandler(
+            log_group=AWS_LOG_GROUP,
+            stream_name=AWS_LOG_STREAM,
+            boto3_session=boto3.Session(region_name=AWS_REGION)
+        )
+        cw_handler.setLevel(logging.INFO)
+        formatter = logging.Formatter('%(asctime)s %(levelname)s %(name)s %(message)s')
+        cw_handler.setFormatter(formatter)
+        logging.getLogger().addHandler(cw_handler)
+        logging.info(f"CloudWatch logging enabled: group={AWS_LOG_GROUP}, stream={AWS_LOG_STREAM}, region={AWS_REGION}")
+except Exception as e:
+    logging.warning(f"CloudWatch logging setup failed: {e}")
