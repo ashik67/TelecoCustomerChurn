@@ -8,6 +8,8 @@ import os
 import pickle
 import io
 from TelecoCustomerChurn.cloud.s3_utils import download_folder_from_s3
+from TelecoCustomerChurn.logging import logger
+import logging
 
 # Paths to model and preprocessor
 FINAL_MODEL_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), 'final_model'))
@@ -203,3 +205,7 @@ def predict_csv_form(request: Request, file: UploadFile = File(...)):
         return templates.TemplateResponse("frontend.html", {"request": request, "features": features, "prediction": prediction[:10], "predict_info": f"Showing first 10 of {len(prediction)} predictions."})
     except Exception as e:
         return templates.TemplateResponse("frontend.html", {"request": request, "features": features, "predict_error": str(e)})
+
+@app.on_event("startup")
+def startup_event():
+    logger.info("FastAPI app startup: logger is working.")
