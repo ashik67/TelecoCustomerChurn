@@ -3,6 +3,16 @@ name: Build and Deploy to AWS EC2
 on:
   push:
     branches: [main]
+    paths-ignore:
+      - '**/*.md'
+      - '**/.env'
+      - '**/.gitignore'
+      - '**/README.md'
+      - '**/LICENSE'
+      - '**/docs/**'
+      - '**/sample_batch_input.csv'
+      - '**/data_schema/**'
+      - '**/EDA.ipynb'
 
 env:
   ECR_REPOSITORY: ${{ vars.ECR_REPOSITORY }}
