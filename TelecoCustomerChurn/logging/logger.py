@@ -46,3 +46,5 @@ try:
         logging.info(f"CloudWatch logging enabled: group={AWS_LOG_GROUP}, stream={AWS_LOG_STREAM}, region={AWS_REGION}")
 except Exception as e:
     logging.warning(f"CloudWatch logging setup failed: {e}")
+
+logging.info("Logger initialized and ready (test log at import).")
