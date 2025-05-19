@@ -124,39 +124,36 @@ Other features may be present in the dataset, but these are the primary drivers 
 
 ## ETL Pipeline
 
-This project uses a modular ETL pipeline to automate data ingestion, transformation, drift detection, and conditional retraining. Below is a summary of each step and how it is implemented:
+This project uses a modular ETL pipeline to automate data ingestion, transformation, drift detection, and (optionally) retraining. Below is a summary of each step and how it is implemented:
 
 ### 1. Data Fetch & Ingestion
 - Loads raw data from `Data/TelecoCustomerChurn.csv` (or external source if configured).
 - Validates schema using `data_schema/schema.yaml`.
 - Stores ingested data in the `artifacts/<timestamp>/data_ingestion/` directory for reproducibility.
-- Code: `TelecoCustomerChurn/pipeline/data_ingestion.py`
+- Code: `TelecoCustomerChurn/components/data_ingestion.py`
 
 ### 2. Data Validation
 - Checks for missing values, schema mismatches, and data integrity.
 - Logs validation results and stores validated data in `artifacts/<timestamp>/data_validation/`.
-- Code: `TelecoCustomerChurn/pipeline/data_validation.py`
+- Code: `TelecoCustomerChurn/components/data_validation.py`
 
 ### 3. Data Transformation
 - Applies feature engineering, encoding, and scaling using a preprocessor pipeline.
 - Saves transformed data and preprocessor object in `artifacts/<timestamp>/data_transformation/`.
-- Code: `TelecoCustomerChurn/pipeline/data_transformation.py`
+- Code: `TelecoCustomerChurn/components/data_transformation.py`
 
 ### 4. Model Training
 - Trains the model on transformed data using the most important features (see above).
 - Evaluates model performance and logs metrics to MLflow/Dagshub.
 - Saves model and artifacts in `final_model/` and `artifacts/<timestamp>/model_training/`.
-- Code: `TelecoCustomerChurn/pipeline/model_training.py`
+- Code: `TelecoCustomerChurn/components/model_trainer.py`
 
-### 5. Drift Detection
-- Compares new data distribution to training data using statistical tests (e.g., KS-test, PSI).
-- If drift is detected, the pipeline stops (no auto-retrain unless enabled in your orchestration logic).
-- Drift detection logic is implemented within the main pipeline code (see `TelecoCustomerChurn/pipeline/`), not as a separate file.
-
-### 6. Conditional Retraining (Optional)
-- If enabled, triggers retraining when drift is detected or on schedule.
-- Uses the same pipeline as initial training for consistency.
-- Code: `TelecoCustomerChurn/pipeline/model_training.py`
+### 5. Drift Detection & Retraining Logic
+- After data validation, a drift report is generated and checked for significant distribution changes between new and training data.
+- If drift is detected (`overall_drift_found: true` in the drift report), the pipeline proceeds with retraining the model.
+- If no drift is detected and a model already exists, retraining is skipped for efficiency.
+- If no model exists (first run or missing), training is always performed.
+- Drift detection and retraining logic are implemented in `TelecoCustomerChurn/pipeline/training_pipeline.py`.
 
 ---
 

@@ -8,9 +8,8 @@ import os
 import pickle
 import io
 from TelecoCustomerChurn.cloud.s3_utils import download_folder_from_s3
-from TelecoCustomerChurn.logging import logger
-import logging
 from contextlib import asynccontextmanager
+from TelecoCustomerChurn.logging.logger import logging
 import threading
 import time
 import boto3
@@ -37,8 +36,8 @@ with open(PREPROCESSOR_PATH, 'rb') as f:
     preprocessor = pickle.load(f)
 
 @asynccontextmanager
-def lifespan(app: FastAPI):
-    logger.info("FastAPI app startup: logger is working.")
+async def lifespan(app: FastAPI):
+    logging.info("FastAPI app startup: logger is working.")
     yield
 
 app = FastAPI(
@@ -64,6 +63,7 @@ class PredictRequest(BaseModel):
 
 @app.get("/", response_class=HTMLResponse)
 def home(request: Request):
+    logging.info("Home page accessed.")
     features = None
     features_error = None
     prediction = request.query_params.get("prediction")

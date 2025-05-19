@@ -37,7 +37,7 @@ try:
         cw_handler = CloudWatchLogHandler(
             log_group=AWS_LOG_GROUP,
             stream_name=AWS_LOG_STREAM,
-            boto3_session=boto3.Session(region_name=AWS_REGION)
+            boto3_client=boto3.client("logs", region_name=AWS_REGION)
         )
         cw_handler.setLevel(logging.INFO)
         formatter = logging.Formatter('%(asctime)s %(levelname)s %(name)s %(message)s')
