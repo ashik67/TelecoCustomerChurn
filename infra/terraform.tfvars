@@ -10,5 +10,5 @@ ec2_instance_profile_name = "teleco-churn-ec2-profile"  # Instance profile name
 ec2_sg_name = "teleco-churn-sg"              # Security group name
 ami_id = "ami-0c02fb55956c7d316"             # AMI ID for EC2 instance (Amazon Linux 2)
 instance_type = "t2.micro"                    # EC2 instance type
-key_name = "teleco-churn-key"                 # EC2 key pair name (set in AWS & GitHub secret)
+key_name = "my-ec2-key-pair"                 # EC2 key pair name (set in AWS & GitHub secret)
 # subnet_id and vpc_id removed; now dynamically fetched
