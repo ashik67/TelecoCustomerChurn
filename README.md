@@ -30,6 +30,26 @@ This dataset is ideal for building models to identify factors influencing custom
 
 ---
 
+## AWS & MLOps Automation
+
+This project is fully productionized and automated for cloud deployment using modern MLOps best practices:
+
+- **Infrastructure as Code (IaC)**: All AWS infrastructure (S3, ECR, EC2, CloudWatch, IAM, Security Groups, etc.) is provisioned and managed using Terraform scripts in the `infra/` directory.
+- **Remote State Management**: Terraform state is stored remotely in S3 with state locking via DynamoDB for safe, collaborative infrastructure changes.
+- **Dynamic, Secure Environment Variables**: All environment variables and secrets (S3 bucket, ECR repo, CloudWatch log group, EC2 host, etc.) are managed dynamically via Terraform outputs and injected into the CI/CD workflow. No hardcoded values.
+- **CI/CD with GitHub Actions**: End-to-end automation for infrastructure provisioning, Docker build/push, and application deployment to EC2 using a single robust workflow (`.github/workflows/deploy.yml`).
+- **ECR Robustness**: ECR repositories are managed with `force_delete = true` to allow safe, idempotent cleanup and redeployment.
+- **Resource Import & Idempotency**: Existing AWS resources are automatically imported into Terraform state to avoid duplication and ensure idempotency.
+- **Production Security**: Security group rules are defined in Terraform and can be tightened for production. IAM roles and policies are least-privilege and managed as code.
+- **Resource Listing Utility**: Includes a Python script (`list_aws_resources.py`) to enumerate all major AWS resources in your account for auditing and troubleshooting.
+
+**Key Files:**
+- `infra/` — All Terraform code for AWS infrastructure
+- `.github/workflows/deploy.yml` — Main CI/CD workflow (infra + app deploy)
+- `list_aws_resources.py` — Script to list all AWS resources
+
+---
+
 ## API Endpoints
 
 - `GET /` : Web frontend for interactive prediction and retraining.
