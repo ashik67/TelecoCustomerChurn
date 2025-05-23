@@ -41,6 +41,19 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ env.AWS_REGION }}
 
+      - name: Create S3 bucket for Terraform state (ignore error if exists)
+        run: |
+          aws s3api create-bucket --bucket teleco-churn-tfstate-bucket --region us-east-1 --create-bucket-configuration LocationConstraint=us-east-1 || true
+
+      - name: Create DynamoDB table for Terraform lock (ignore error if exists)
+        run: |
+          aws dynamodb create-table \
+            --table-name teleco-churn-tfstate-lock \
+            --attribute-definitions AttributeName=LockID,AttributeType=S \
+            --key-schema AttributeName=LockID,KeyType=HASH \
+            --provisioned-throughput ReadCapacityUnits=1,WriteCapacityUnits=1 \
+            --region us-east-1 || true
+
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
         with:
