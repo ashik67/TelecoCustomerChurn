@@ -12,7 +12,8 @@ resource "aws_s3_bucket" "artifacts" {
 
 # ECR repository for Docker images
 resource "aws_ecr_repository" "app_repo" {
-  name = var.ecr_repo_name  # Name of the ECR repository
+  name         = var.ecr_repo_name  # Name of the ECR repository
+  force_delete = true               # Allow deletion of non-empty ECR repo
 }
 
 # CloudWatch Log Group for centralized logging
