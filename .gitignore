@@ -4,3 +4,7 @@ artifacts/
 mlruns/
 logs/
 final_model/
+infra/.terraform/
+infra/*.tfstate
+infra/*.tfstate.*
+infra/.terraform.lock.hcl
