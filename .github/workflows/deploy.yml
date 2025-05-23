@@ -15,15 +15,11 @@ on:
       - '**/EDA.ipynb'
 
 env:
-  ECR_REPOSITORY: ${{ vars.ECR_REPOSITORY }}
   AWS_REGION: ${{ vars.AWS_REGION }}
   IMAGE_TAG: ${{ vars.IMAGE_TAG }}
   EC2_USER: ${{ vars.EC2_USER }}
-  EC2_HOST: ${{ vars.EC2_HOST }}
   CONTAINER_NAME: ${{ vars.CONTAINER_NAME }}
   MONGO_URI: ${{ secrets.MONGO_URI }}
-  S3_BUCKET: ${{ vars.S3_BUCKET }}
-  CLOUDWATCH_LOG_GROUP: ${{ vars.CLOUDWATCH_LOG_GROUP }}
   CLOUDWATCH_LOG_STREAM: ${{ vars.CLOUDWATCH_LOG_STREAM }}
 
 jobs:
@@ -75,6 +71,7 @@ jobs:
           terraform import aws_cloudwatch_log_group.app_logs /teleco-churn/logs || true
           terraform import aws_iam_role.ec2_role teleco-churn-ec2-role || true
           terraform import aws_iam_instance_profile.ec2_profile teleco-churn-ec2-profile || true
+          # NOTE: Set EC2_SG_ID as a GitHub Actions variable for the security group import below
           terraform import aws_security_group.ec2_sg ${{ vars.EC2_SG_ID }} || true
         working-directory: infra
 
@@ -85,6 +82,14 @@ jobs:
       - name: Terraform Apply
         run: terraform apply -auto-approve
         working-directory: infra
+
+      - name: Get Terraform Outputs
+        id: tf-outputs
+        run: |
+          echo "S3_BUCKET=$(terraform -chdir=infra output -raw s3_bucket_name)" >> $GITHUB_ENV
+          echo "ECR_REPOSITORY=$(terraform -chdir=infra output -raw ecr_repo_url)" >> $GITHUB_ENV
+          echo "CLOUDWATCH_LOG_GROUP=$(terraform -chdir=infra output -raw cloudwatch_log_group_name)" >> $GITHUB_ENV
+          echo "EC2_HOST=$(terraform -chdir=infra output -raw ec2_public_dns)" >> $GITHUB_ENV
 
       - name: Login to Amazon ECR
         id: login-ecr
