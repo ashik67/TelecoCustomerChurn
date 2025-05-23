@@ -11,5 +11,4 @@ ec2_sg_name = "teleco-churn-sg"              # Security group name
 ami_id = "ami-0c02fb55956c7d316"             # AMI ID for EC2 instance (Amazon Linux 2)
 instance_type = "t2.micro"                    # EC2 instance type
 key_name = "teleco-churn-key"                 # EC2 key pair name (set in AWS & GitHub secret)
-subnet_id = "subnet-0a1b2c3d4e5f6g7h8"       # Subnet ID (set in GitHub variable)
-vpc_id = "vpc-0a1b2c3d4e5f6g7h8"             # VPC ID (set in GitHub variable)
+# subnet_id and vpc_id removed; now dynamically fetched

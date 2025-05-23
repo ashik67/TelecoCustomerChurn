@@ -62,11 +62,24 @@ resource "aws_iam_instance_profile" "ec2_profile" {
   role = aws_iam_role.ec2_role.name
 }
 
+# Fetch the default VPC
+data "aws_vpc" "default" {
+  default = true
+}
+
+# Fetch all subnets in the default VPC
+data "aws_subnets" "default" {
+  filter {
+    name   = "vpc-id"
+    values = [data.aws_vpc.default.id]
+  }
+}
+
 # Security Group for EC2 instance
 resource "aws_security_group" "ec2_sg" {
   name        = var.ec2_sg_name
   description = "Allow SSH and HTTP access"
-  vpc_id      = var.vpc_id
+  vpc_id      = data.aws_vpc.default.id
 
   ingress {
     from_port   = 22
@@ -93,7 +106,7 @@ resource "aws_instance" "app_server" {
   ami                    = var.ami_id
   instance_type          = var.instance_type
   key_name               = var.key_name
-  subnet_id              = var.subnet_id
+  subnet_id              = data.aws_subnets.default.ids[0]
   vpc_security_group_ids = [aws_security_group.ec2_sg.id]
   iam_instance_profile   = aws_iam_instance_profile.ec2_profile.name
 

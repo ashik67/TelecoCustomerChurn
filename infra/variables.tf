@@ -56,13 +56,3 @@ variable "key_name" {
   description = "Name of the EC2 key pair for SSH access"
   type        = string
 }
-
-variable "subnet_id" {
-  description = "Subnet ID for the EC2 instance"
-  type        = string
-}
-
-variable "vpc_id" {
-  description = "VPC ID for the security group"
-  type        = string
-}
