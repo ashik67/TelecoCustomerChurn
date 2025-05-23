@@ -1,4 +1,4 @@
-name: Build and Deploy to AWS EC2
+name: Build and Deploy Telco Churn MLOps Pipeline to AWS EC2
 
 on:
   push:
