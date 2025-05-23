@@ -11,6 +11,11 @@ output "ecr_repo_url" {
   description = "URL of the ECR repository for Docker images"
 }
 
+output "ecr_repo_name" {
+  value = aws_ecr_repository.app_repo.name
+  description = "Name of the ECR repository for Docker images"
+}
+
 output "cloudwatch_log_group_name" {
   value = aws_cloudwatch_log_group.app_logs.name
   description = "Name of the CloudWatch log group"

@@ -87,7 +87,8 @@ jobs:
         id: tf-outputs
         run: |
           echo "S3_BUCKET=$(terraform -chdir=infra output -raw s3_bucket_name)" >> $GITHUB_ENV
-          echo "ECR_REPOSITORY=$(terraform -chdir=infra output -raw ecr_repo_url)" >> $GITHUB_ENV
+          echo "ECR_REPOSITORY=$(terraform -chdir=infra output -raw ecr_repo_name)" >> $GITHUB_ENV
+          echo "ECR_REPOSITORY_URL=$(terraform -chdir=infra output -raw ecr_repo_url)" >> $GITHUB_ENV
           echo "CLOUDWATCH_LOG_GROUP=$(terraform -chdir=infra output -raw cloudwatch_log_group_name)" >> $GITHUB_ENV
           echo "EC2_HOST=$(terraform -chdir=infra output -raw ec2_public_dns)" >> $GITHUB_ENV
 
@@ -98,8 +99,8 @@ jobs:
       - name: Build, tag, and push image to ECR
         run: |
           docker build -t $ECR_REPOSITORY:$IMAGE_TAG .
-          docker tag $ECR_REPOSITORY:$IMAGE_TAG ${{ steps.login-ecr.outputs.registry }}/$ECR_REPOSITORY:$IMAGE_TAG
-          docker push ${{ steps.login-ecr.outputs.registry }}/$ECR_REPOSITORY:$IMAGE_TAG
+          docker tag $ECR_REPOSITORY:$IMAGE_TAG $ECR_REPOSITORY_URL:$IMAGE_TAG
+          docker push $ECR_REPOSITORY_URL:$IMAGE_TAG
 
       - name: Prepare EC2 (upgrade & install Docker)
         uses: appleboy/ssh-action@v1
@@ -121,17 +122,17 @@ jobs:
           host: ${{ env.EC2_HOST }}
           username: ${{ env.EC2_USER }}
           key: ${{ secrets.EC2_SSH_KEY }}
-          envs: ECR_REPOSITORY,IMAGE_TAG,CONTAINER_NAME,MONGO_URI,S3_BUCKET,CLOUDWATCH_LOG_GROUP,CLOUDWATCH_LOG_STREAM,AWS_REGION
+          envs: ECR_REPOSITORY,ECR_REPOSITORY_URL,IMAGE_TAG,CONTAINER_NAME,MONGO_URI,S3_BUCKET,CLOUDWATCH_LOG_GROUP,CLOUDWATCH_LOG_STREAM,AWS_REGION
           script: |
             echo "CONTAINER_NAME=$CONTAINER_NAME"
-            echo "IMAGE=${{ steps.login-ecr.outputs.registry }}/$ECR_REPOSITORY:$IMAGE_TAG"
+            echo "IMAGE=$ECR_REPOSITORY_URL:$IMAGE_TAG"
             echo "MONGO_URI=$MONGO_URI"
             echo "S3_BUCKET=$S3_BUCKET"
             echo "CLOUDWATCH_LOG_GROUP=$CLOUDWATCH_LOG_GROUP"
             echo "CLOUDWATCH_LOG_STREAM=$CLOUDWATCH_LOG_STREAM"
             echo "AWS_REGION=$AWS_REGION"
-            aws ecr get-login-password --region ${{ env.AWS_REGION }} | docker login --username AWS --password-stdin ${{ steps.login-ecr.outputs.registry }}
-            docker pull ${{ steps.login-ecr.outputs.registry }}/$ECR_REPOSITORY:$IMAGE_TAG
+            aws ecr get-login-password --region ${{ env.AWS_REGION }} | docker login --username AWS --password-stdin $ECR_REPOSITORY_URL | true
+            docker pull $ECR_REPOSITORY_URL:$IMAGE_TAG
             docker stop $CONTAINER_NAME || true
             docker rm $CONTAINER_NAME || true
             docker run -d --name $CONTAINER_NAME \
@@ -140,4 +141,4 @@ jobs:
               -e CLOUDWATCH_LOG_GROUP="$CLOUDWATCH_LOG_GROUP" \
               -e CLOUDWATCH_LOG_STREAM="$CLOUDWATCH_LOG_STREAM" \
               -e AWS_REGION="$AWS_REGION" \
-              -p 80:8000 ${{ steps.login-ecr.outputs.registry }}/$ECR_REPOSITORY:$IMAGE_TAG
+              -p 80:8000 $ECR_REPOSITORY_URL:$IMAGE_TAG
