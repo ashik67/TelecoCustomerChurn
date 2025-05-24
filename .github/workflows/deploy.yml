@@ -13,6 +13,21 @@ on:
       - '**/sample_batch_input.csv'
       - '**/data_schema/**'
       - '**/EDA.ipynb'
+      - '**/MOVE_TF_FILES_HERE.txt'
+      - '**/test_*.py'
+      - '**/push_data.py'
+      - '**/delete_all_aws_resources.py'
+      - '**/list_aws_resources.py'
+      - '**/logs/**'
+      - '**/artifacts/**'
+      - '**/final_model/**'
+      - '**/venv/**'
+      - '**/__pycache__/**'
+      - '**/.vscode/**'
+      - '**/.DS_Store'
+      - '**/terraform.tfstate*'
+      - '**/infra/terraform.tfstate*'
+      - '**/infra/MOVE_TF_FILES_HERE.txt'
 
 env:
   AWS_REGION: ${{ vars.AWS_REGION }}
